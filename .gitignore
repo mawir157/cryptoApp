@@ -1,0 +1,8 @@
+# Ignore everything
+*
+# Unignore gitignore
+!.gitignore
+# Unignore .go files
+!*.go
+!go.mod
+!go.sum
