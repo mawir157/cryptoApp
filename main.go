@@ -20,6 +20,7 @@ package main
 
 import (
     "fmt"
+    "strconv"
 
     "github.com/gotk3/gotk3/gtk"
 )
@@ -43,7 +44,7 @@ func PrintEncoding(i Encoding) string {
         return "Hex"
     default:
         return "??!"
-    }    
+    }
 }
 
 type BCipher int
@@ -93,7 +94,6 @@ func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
         s.plaintextE = Ascii
     }
 
-    s.PrintState()
     return
 }
 
@@ -110,7 +110,56 @@ func onCTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
         s.ciphertextE = Ascii
     }
 
-    s.PrintState()
+    return
+}
+
+func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
+    switch enc := cb.GetActiveText(); enc {
+    case "AES":
+        s.cipher = AES
+    default:
+        fmt.Printf("Unidentified Encoding%s.\n", enc)
+        s.cipher = AES
+    }
+
+    return
+}
+
+func onRNGChanged(cb *gtk.ComboBoxText, s *Config) {
+    switch enc := cb.GetActiveText(); enc {
+    case "Mersenne Twister":
+        s.rng = Mersenne
+    case "PCG":
+        s.rng = PCG
+    default:
+        fmt.Printf("Unidentified Encoding%s.\n", enc)
+        s.rng = Mersenne
+    }
+
+    return
+}
+
+func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
+     switch enc := cb.GetActiveText(); enc {
+    case "ECB":
+        s.modeOfOp = ECB
+    case "CBC":
+        s.modeOfOp = CBC
+    case "PCB":
+        s.modeOfOp = PCB
+    case "OFB":
+        s.modeOfOp = OFB
+    case "CTR":
+        s.modeOfOp = CTR
+    case "CFB":
+        s.modeOfOp = CFB
+    case "PRNG stream":
+        s.modeOfOp = PRNG
+    default:
+        fmt.Printf("Unidentified Encoding%s.\n", enc)
+        s.modeOfOp = ECB
+    }
+
     return
 }
 
@@ -125,6 +174,13 @@ func onIvChanged(entry *gtk.Entry, s *Config) {
 func onNonceChanged(entry *gtk.Entry, s *Config) {
     s.nonce, _ = entry.GetText()
 }
+
+func onSeedChanged(entry *gtk.Entry, s *Config) {
+    seedString, _ := entry.GetText()
+    seed, _ := strconv.Atoi(seedString)
+    s.seed = seed
+}
+
 
 func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 
@@ -247,15 +303,20 @@ func main() {
             mode_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
                 blockCiphers := []string{"AES"}
-                add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
+                primitiveCombo, _ := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
                                modes := []string{"ECB", "CBC", "PCB", "OFB", "CTR",
                                   "CFB", "PRNG stream"}
-                add_drop_down(mode_box_lhs, "Cipher mode: ", modes, 0)
+                modeCombo, _ := add_drop_down(mode_box_lhs, "Cipher mode: ", modes, 0)
+
+                primitiveCombo.Connect("changed", onPrimitiveChanged, &state)
+                modeCombo.Connect("changed", onModeChanged, &state)
 
                 prngs := []string{"Mersenne Twister", "PCG"}
-                add_drop_down(mode_box_lhs, "Pseudo-RNGs: ", prngs, 0)
+                rngCombo, _ := add_drop_down(mode_box_lhs, "Pseudo-RNGs: ", prngs, 0)
+                rngCombo.Connect("changed", onRNGChanged, &state)
 
-                add_entry_box(mode_box_lhs, "PRNG Seed", "123456")
+                seed_box := add_entry_box(mode_box_lhs, "PRNG Seed", "123456")
+                seed_box.Connect("changed", onSeedChanged, &state)
 
         mode_box.PackStart(mode_box_lhs, true, true, 0)
 
@@ -264,11 +325,11 @@ func main() {
                 key_box := add_entry_box(mode_box_rhs, "Key", "0000000000000000")
                 key_box.Connect("changed", onKeyChanged, &state)
 
-                add_entry_box(mode_box_rhs, "IV", "0000000000000000")
-                key_box.Connect("changed", onIvChanged, &state)
+                iv_box := add_entry_box(mode_box_rhs, "IV", "0000000000000000")
+                iv_box.Connect("changed", onIvChanged, &state)
 
-                add_entry_box(mode_box_rhs, "nonce", "0000000000000000")
-                key_box.Connect("changed", onNonceChanged, &state)
+                nonce_box := add_entry_box(mode_box_rhs, "nonce", "0000000000000000")
+                nonce_box.Connect("changed", onNonceChanged, &state)
 
                mode_box.PackStart(mode_box_rhs, true, true, 0)
     main_box.PackStart(mode_box, true, true, 0)

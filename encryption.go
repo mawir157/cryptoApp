@@ -8,6 +8,8 @@ import JMT "github.com/mawir157/jmtcrypto"
 import JMTR "github.com/mawir157/jmtcrypto/rand"
 
 func doEncryption(msg []byte, state *Config) []byte {
+	state.PrintState()
+
 	key := JMT.BytesToWords(JMT.ParseFromAscii(state.key, false), false)
 
 	var iv [4]JMT.Word
