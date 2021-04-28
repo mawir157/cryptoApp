@@ -268,13 +268,14 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
     text := get_text_from_tview(inBow)
 
     byteStream := []byte{}
+    var err error
     switch enc := s.plaintextE; enc {
     case Ascii:
-        byteStream = JMT.ParseFromAscii(text, false)
+        byteStream, err = JMT.ParseFromAscii(text, false)
     case Base64:
-        byteStream = JMT.ParseFromBase64(text, false)
+        byteStream, err = JMT.ParseFromBase64(text, false)
     case Hex:
-        byteStream = JMT.ParseFromHex(text, false)
+        byteStream, err = JMT.ParseFromHex(text, false)
     default:
         fmt.Printf("Unidentified Encoding%s.\n", enc)
         s.ciphertextE = Ascii
@@ -282,23 +283,40 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 
     encryptedText := ""
 
-    fmt.Println(len(byteStream))
-    byteStream = doEncryption(byteStream, s)
-    fmt.Println(len(byteStream))
+    if err != nil {
+        set_text_in_tview(outBox, err.Error())
+        return
+    }
+
+    // fmt.Println(len(byteStream))
+    byteStream, err = doEncryption(byteStream, s)
+
+    if err != nil {
+        set_text_in_tview(outBox, err.Error())
+        return
+    }
+
+    // fmt.Println(len(byteStream))
 
     switch enc := s.ciphertextE; enc {
     case Ascii:
-        encryptedText = JMT.ParseToAscii(byteStream, true)
+        encryptedText, err = JMT.ParseToAscii(byteStream, true)
     case Base64:
-        encryptedText = JMT.ParseToBase64(byteStream)
+        encryptedText, err = JMT.ParseToBase64(byteStream)
     case Hex:
-        encryptedText = JMT.ParseToHex(byteStream)
+        encryptedText, err = JMT.ParseToHex(byteStream)
     default:
         fmt.Printf("Unidentified Encoding%s.\n", enc)
         s.ciphertextE = Ascii
     }
 
+    if err != nil {
+        set_text_in_tview(outBox, err.Error())
+        return
+    }
+
     set_text_in_tview(outBox, encryptedText)
+    return
 }
 
 func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
@@ -306,38 +324,55 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
     text := get_text_from_tview(inBow)
 
     byteStream := []byte{}
+    var err error
     switch enc := s.ciphertextE; enc {
     case Ascii:
-        byteStream = JMT.ParseFromAscii(text, false)
+        byteStream, err = JMT.ParseFromAscii(text, false)
     case Base64:
-        byteStream = JMT.ParseFromBase64(text, false)
+        byteStream, err = JMT.ParseFromBase64(text, false)
     case Hex:
-        byteStream = JMT.ParseFromHex(text, false)
+        byteStream, err = JMT.ParseFromHex(text, false)
     default:
         fmt.Printf("Unidentified Encoding%s.\n", enc)
         s.ciphertextE = Ascii
+    }
+
+    if err != nil {
+        set_text_in_tview(outBox, err.Error())
+        return
     }
 
     encryptedText := ""
 
-    fmt.Println(len(byteStream))
-    byteStream = doDecryption(byteStream, s)
-    fmt.Println(len(byteStream))
+    // fmt.Println(len(byteStream))
+    byteStream, err = doDecryption(byteStream, s)
+    // fmt.Println(len(byteStream))
     // fmt.Println(byteStream)
+
+    if err != nil {
+        set_text_in_tview(outBox, err.Error())
+        return
+    }
 
     switch enc := s.plaintextE; enc {
     case Ascii:
-        encryptedText = JMT.ParseToAscii(byteStream, true)
+        encryptedText, err = JMT.ParseToAscii(byteStream, true)
     case Base64:
-        encryptedText = JMT.ParseToBase64(byteStream)
+        encryptedText, err = JMT.ParseToBase64(byteStream)
     case Hex:
-        encryptedText = JMT.ParseToHex(byteStream)
+        encryptedText, err = JMT.ParseToHex(byteStream)
     default:
         fmt.Printf("Unidentified Encoding%s.\n", enc)
         s.ciphertextE = Ascii
     }
 
+    if err != nil {
+        set_text_in_tview(outBox, err.Error())
+        return
+    }
+
     set_text_in_tview(outBox, encryptedText)
+    return
 }
 
 func (s *Config) PrintState() {

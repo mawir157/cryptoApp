@@ -1,23 +1,33 @@
 package main
 
 import (
+	"errors"
 	"log"
 )
 
 import JMT "github.com/mawir157/jmtcrypto"
 import JMTR "github.com/mawir157/jmtcrypto/rand"
 
-func doEncryption(msg []byte, state *Config) []byte {
-	// state.PrintState()
-
-	key := JMT.BytesToWords(JMT.ParseFromAscii(state.key, false), false)
+func doEncryption(msg []byte, state *Config) ([]byte, error) {
+	keyBytes, err := JMT.ParseFromAscii(state.key, false)
+	if err != nil {
+		return []byte{}, errors.New("Invalid Key")
+	}
+	key := JMT.BytesToWords(keyBytes, false)
 
 	var iv [4]JMT.Word
-	temp := JMT.BytesToWords(JMT.ParseFromAscii(state.iv, false), false)
+	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
+	if err != nil {
+		return []byte{}, errors.New("Invalid IV")
+	}
+	temp := JMT.BytesToWords(ivBytes, false)
 	copy(iv[:], temp)
 
-	nonce := JMT.ParseFromAscii(state.nonce, false)
- 	
+	nonce, err := JMT.ParseFromAscii(state.nonce, false)
+ 	if err != nil {
+		return []byte{}, errors.New("Invalid Nonce")
+	}
+
 	var bc JMT.BlockCipher
 	switch state.cipher {
     case AES:
@@ -49,17 +59,28 @@ func doEncryption(msg []byte, state *Config) []byte {
     case PRNG:
 			_, out = JMT.PRNGStreamEncode(state.seed, rng, msg)
 	}
-  return out
+  return out, nil
 }
 
-func doDecryption(msg []byte, state *Config) []byte {
-	key := JMT.BytesToWords(JMT.ParseFromAscii(state.key, false), false)
+func doDecryption(msg []byte, state *Config) ([]byte, error) {
+	keyBytes, err := JMT.ParseFromAscii(state.key, false)
+	if err != nil {
+		return []byte{}, errors.New("Invalid Key")
+	}
+	key := JMT.BytesToWords(keyBytes, false)
 
 	var iv [4]JMT.Word
-	temp := JMT.BytesToWords(JMT.ParseFromAscii(state.iv, false), false)
+	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
+	if err != nil {
+		return []byte{}, errors.New("Invalid IV")
+	}
+	temp := JMT.BytesToWords(ivBytes, false)
 	copy(iv[:], temp)
 
-	nonce := JMT.ParseFromAscii(state.nonce, false)
+	nonce, err := JMT.ParseFromAscii(state.nonce, false)
+ 	if err != nil {
+		return []byte{}, errors.New("Invalid Nonce")
+	}
  	
 	var bc JMT.BlockCipher
 	switch state.cipher {
@@ -76,7 +97,6 @@ func doDecryption(msg []byte, state *Config) []byte {
 	}
 
 	out := []byte{}
-	var err error
 	switch state.modeOfOp {
 		case ECB:
 			out, err = JMT.ECBDecrypt(bc, msg)
@@ -97,5 +117,5 @@ func doDecryption(msg []byte, state *Config) []byte {
   if err != nil {
 		log.Fatal("Failed to decrypt:", err)
   }
-  return out
+  return out, err
 }
