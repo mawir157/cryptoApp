@@ -22,7 +22,7 @@ func setup_window(title string) *gtk.Window {
 }
 
 func setup_box(orient gtk.Orientation) *gtk.Box {
-    box, err := gtk.BoxNew(orient, 0)
+    box, err := gtk.BoxNew(orient, 2)
     if err != nil {
         log.Fatal("Unable to create box:", err)
     }
@@ -124,7 +124,7 @@ func add_text_box(box *gtk.Box, intialText, label string) *gtk.TextView {
     }
 }
 
-func add_entry_box(box *gtk.Box, label, intialText string) *gtk.Entry {
+func add_entry_box(box *gtk.Box, label, intialText string, max int) *gtk.Entry {
     subBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
     labelBox, err := gtk.LabelNew(label)
     labelBox.SetJustify(gtk.JUSTIFY_RIGHT)
@@ -140,8 +140,44 @@ func add_entry_box(box *gtk.Box, label, intialText string) *gtk.Entry {
     }
     subBox.PackStart(entryBox, true, true, 0)
     entryBox.SetText(intialText)
+    entryBox.SetMaxLength(max)
 
     box.PackStart(subBox, false, true, 0)
 
     return entryBox
+}
+
+func addHLine(box *gtk.Box, space uint) *gtk.Separator {
+    sep, err := gtk.SeparatorNew(gtk.ORIENTATION_HORIZONTAL)
+    if err != nil {
+        log.Fatal("Failed to make label:", err)
+    }
+
+    box.PackStart(sep, false, true, space)
+
+    return sep
+}
+
+func addVLine(box *gtk.Box, space uint) *gtk.Separator {
+    sep, err := gtk.SeparatorNew(gtk.ORIENTATION_VERTICAL)
+    if err != nil {
+        log.Fatal("Failed to make label:", err)
+    }
+
+    box.PackStart(sep, false, true, space)
+
+    return sep
+}
+
+func makeOKDialog(title, message string) *gtk.Dialog {
+	d, _ := gtk.DialogNew()
+	d.SetTitle(title)
+	d.AddButton("OK", 1)
+	l, _ := gtk.LabelNew(message)
+	l.SetJustify(gtk.JUSTIFY_CENTER)
+	v, _ := d.GetContentArea()
+	v.PackStart(l, true, true, 10)   
+	d.ShowAll()
+
+   return d	
 }

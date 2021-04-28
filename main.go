@@ -21,7 +21,7 @@ package main
 import (
     "fmt"
     "strconv"
-
+    "github.com/gotk3/gotk3/gdk"
     "github.com/gotk3/gotk3/gtk"
 )
 
@@ -79,6 +79,7 @@ type Config struct {
     nonce        string
     rng          PRNGType
     seed         int
+    valid        bool
 }
 
 func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
@@ -167,18 +168,98 @@ func onKeyChanged(entry *gtk.Entry, s *Config) {
     s.key, _ = entry.GetText()
 }
 
+func onKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
+    name := "Key"
+    required := 16
+
+    key, _ := entry.GetText()
+    if len(key) != 16 {
+        s.valid = false
+        title := fmt.Sprintf("%s length warning")
+        message := fmt.Sprintf("Warning!\n %s must be exactly\n%d bytes.", name, required)
+
+        dialog := makeOKDialog(title, message)
+        dialog.Run()
+        dialog.Destroy()
+        return
+    }
+
+    s.valid = true
+
+    return
+}
+
 func onIvChanged(entry *gtk.Entry, s *Config) {
     s.iv, _ = entry.GetText()
+}
+
+func onIVLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
+    name := "IV"
+    required := 16
+    v, _ := entry.GetText()
+
+    if len(v) != required {
+        s.valid = false
+        title := fmt.Sprintf("%s length warning")
+        message := fmt.Sprintf("Warning!\n %s must be exactly\n%d bytes.", name, required)
+
+        dialog := makeOKDialog(title, message)
+        dialog.Run()
+        dialog.Destroy()
+        return
+    }
+
+    s.valid = true
+
+    return
 }
 
 func onNonceChanged(entry *gtk.Entry, s *Config) {
     s.nonce, _ = entry.GetText()
 }
 
+func onNonceLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
+    name := "nonce"
+    required := 8
+    v, _ := entry.GetText()
+
+    if len(v) != required {
+        s.valid = false
+        title := fmt.Sprintf("%s length warning")
+        message := fmt.Sprintf("Warning!\n %s must be exactly\n%d bytes.", name, required)
+
+        dialog := makeOKDialog(title, message)
+        dialog.Run()
+        dialog.Destroy()
+
+        return
+    }
+
+    s.valid = true
+
+    return
+}
+
 func onSeedChanged(entry *gtk.Entry, s *Config) {
     seedString, _ := entry.GetText()
-    seed, _ := strconv.Atoi(seedString)
+    seed, err := strconv.Atoi(seedString)
+
+    if err != nil {
+        s.valid = false
+        title := "Seed error"
+        message := "Seed must be an integer."
+
+        dialog := makeOKDialog(title, message)
+        dialog.Run()
+        dialog.Destroy()
+
+        return
+    }
+
     s.seed = seed
+    s.valid = true
+
+    return
 }
 
 
@@ -189,7 +270,7 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
     byteStream := []byte{}
     switch enc := s.plaintextE; enc {
     case Ascii:
-        byteStream = JMT.ParseFromAscii(text, true)
+        byteStream = JMT.ParseFromAscii(text, false)
     case Base64:
         byteStream = JMT.ParseFromBase64(text, false)
     case Hex:
@@ -227,7 +308,7 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
     byteStream := []byte{}
     switch enc := s.ciphertextE; enc {
     case Ascii:
-        byteStream = JMT.ParseFromAscii(text, true)
+        byteStream = JMT.ParseFromAscii(text, false)
     case Base64:
         byteStream = JMT.ParseFromBase64(text, false)
     case Hex:
@@ -242,6 +323,7 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
     fmt.Println(len(byteStream))
     byteStream = doDecryption(byteStream, s)
     fmt.Println(len(byteStream))
+    // fmt.Println(byteStream)
 
     switch enc := s.plaintextE; enc {
     case Ascii:
@@ -267,12 +349,12 @@ func (s *Config) PrintState() {
 func main() {
     state := Config{plaintextE:Ascii, ciphertextE:Base64, cipher:AES,
                     modeOfOp:CBC, key:"0000000000000000", iv:"0000000000000000",
-                    nonce:"0000000000000000", rng:Mersenne, seed:0}
+                    nonce:"0000000000000000", rng:Mersenne, seed:0, valid:true}
 
     state.PrintState()
     gtk.Init(nil)
 
-    win := setup_window("Simple Example")
+    win := setup_window("Crypto Sandbox")
 
     main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 ////////////////////////////////////////////////////////////////////////////////
@@ -286,17 +368,19 @@ func main() {
                 ptEncoding.Connect("changed", onPTEncodingChanged, &state)
 
         text_box.PackStart(text_box_lhs, true, true, 0)
+        addVLine(text_box, 10)
 
             text_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
                 cipherText := add_text_box(text_box_rhs, "Cipher text here!", "CipherText")
 
-                ctEncoding, _ := add_drop_down(text_box_rhs, "Encoding: ", encdoings, 1)
+                ctEncoding, _ := add_drop_down(text_box_rhs, "Encoding: ", encdoings[1:], 0)
                 ctEncoding.Connect("changed", onCTEncodingChanged, &state)
 
         text_box.PackStart(text_box_rhs, true, true, 0)
 
     main_box.PackStart(text_box, true, true, 0)
+    addHLine(main_box, 10)
 ////////////////////////////////////////////////////////////////////////////////
         mode_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
@@ -315,26 +399,32 @@ func main() {
                 rngCombo, _ := add_drop_down(mode_box_lhs, "Pseudo-RNGs: ", prngs, 0)
                 rngCombo.Connect("changed", onRNGChanged, &state)
 
-                seed_box := add_entry_box(mode_box_lhs, "PRNG Seed", "123456")
+                seed_box := add_entry_box(mode_box_lhs, "PRNG Seed", "123456", 8)
                 seed_box.Connect("changed", onSeedChanged, &state)
 
         mode_box.PackStart(mode_box_lhs, true, true, 0)
+        addVLine(mode_box, 10)
 
             mode_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-                key_box := add_entry_box(mode_box_rhs, "Key", "0000000000000000")
+                key_box := add_entry_box(mode_box_rhs, "Key", "0000000000000000", 16)
                 key_box.Connect("changed", onKeyChanged, &state)
+                key_box.Connect("focus_out_event", onKeyLoseFocus, &state)
 
-                iv_box := add_entry_box(mode_box_rhs, "IV", "0000000000000000")
+                iv_box := add_entry_box(mode_box_rhs, "IV", "0000000000000000", 16)
                 iv_box.Connect("changed", onIvChanged, &state)
+                iv_box.Connect("focus_out_event", onIVLoseFocus, &state)
 
-                nonce_box := add_entry_box(mode_box_rhs, "nonce", "0000000000000000")
+                nonce_box := add_entry_box(mode_box_rhs, "nonce", "0000000000000000", 8)
                 nonce_box.Connect("changed", onNonceChanged, &state)
+                nonce_box.Connect("focus_out_event", onNonceLoseFocus, &state)
 
                mode_box.PackStart(mode_box_rhs, true, true, 0)
     main_box.PackStart(mode_box, true, true, 0)
+    addHLine(main_box, 10)
 ////////////////////////////////////////////////////////////////////////////////
         do_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+            addHLine(do_box, 10)
 
             io_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
@@ -347,6 +437,7 @@ func main() {
                 io_box.SetHAlign(gtk.ALIGN_CENTER)
 
             do_box.Add(io_box)
+            addHLine(do_box, 10)
 
             endecrypt_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
@@ -365,17 +456,25 @@ func main() {
                 endecrypt_box.SetHAlign(gtk.ALIGN_CENTER)
 
             do_box.Add(endecrypt_box)
+            addHLine(do_box, 10)
+
+            close_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+
+                btnClose := setup_btn("Close")
+                btnClose.Connect("clicked", func() {
+                    win.Close()
+                })
+                close_box.Add(btnClose)
+
+                close_box.SetHAlign(gtk.ALIGN_CENTER)
+
+            do_box.Add(close_box)
+            addHLine(do_box, 10)
 
         do_box.SetHAlign(gtk.ALIGN_CENTER)
 
     main_box.PackStart(do_box, false, true, 10)
-    //         combo = Gtk.ComboBoxText()
-    //     combo.insert(0, "0", "24-hour")
-    //     combo.insert(1, "1", "AM/PM")
-    //     hbox.pack_start(label, True, True, 0)
-    //     hbox.pack_start(combo, False, True, 0)
-
-    // text_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
+    addHLine(main_box, 10)
 
     win.Add(main_box)
 
@@ -411,9 +510,8 @@ func main() {
     | | |PRIM_DROP|  |ENC_MODE|  |  | KEY_TEXT | | KEY_OK |   | |
     | | |INFORMATIVE_ERRORS|X|   |                            | |
     | --------------------------------------------------------- |
-    ------------------------------------------------------------|                          
+    ------------------------------------------------------------|
     |                        DO_BOX                             |
-    |                  | ENCRPYT| |DECTRPY|                     |                    
+    |                  | ENCRPYT| |DECTRPY|                     |
     -------------------------------------------------------------
-
 */
