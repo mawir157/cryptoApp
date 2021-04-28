@@ -16,7 +16,7 @@ func setup_window(title string) *gtk.Window {
     win.Connect("destroy", func() {
         gtk.MainQuit()
     })
-    win.SetDefaultSize(800, 600)
+    win.SetDefaultSize(1200, 900)
     win.SetPosition(gtk.WIN_POS_CENTER)
     return win
 }

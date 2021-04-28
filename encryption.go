@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"log"
+	// "log"
 )
 
 import JMT "github.com/mawir157/jmtcrypto"
@@ -30,8 +30,8 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 
 	var bc JMT.BlockCipher
 	switch state.cipher {
-    case AES:
-    	bc = JMT.MakeAES(key)
+		case AES:
+			bc = JMT.MakeAES(key)
 	}
 
 	var rng JMT.PRNG
@@ -46,20 +46,20 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	switch state.modeOfOp {
 		case ECB:
 			out = JMT.ECBEncrypt(bc, msg)
-    case CBC:
+		case CBC:
 			out = JMT.CBCEncrypt(bc, iv, msg)
-    case PCB:
+		case PCB:
 			out = JMT.PCBCEncrypt(bc, iv, msg)
-    case OFB:
+		case OFB:
 			out = JMT.OFBEncrypt(bc, iv, msg)
-    case CTR:
+		case CTR:
 			out = JMT.CTREncrypt(bc, nonce, msg)
-    case CFB:
+		case CFB:
 			out = JMT.CFBEncrypt(bc, iv, msg)
-    case PRNG:
+		case PRNG:
 			_, out = JMT.PRNGStreamEncode(state.seed, rng, msg)
 	}
-  return out, nil
+	return out, nil
 }
 
 func doDecryption(msg []byte, state *Config) ([]byte, error) {
@@ -84,8 +84,8 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
  	
 	var bc JMT.BlockCipher
 	switch state.cipher {
-    case AES:
-    	bc = JMT.MakeAES(key)
+		case AES:
+			bc = JMT.MakeAES(key)
 	}
 
 	var rng JMT.PRNG
@@ -100,22 +100,23 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	switch state.modeOfOp {
 		case ECB:
 			out, err = JMT.ECBDecrypt(bc, msg)
-    case CBC:
+		case CBC:
 			out, err = JMT.CBCDecrypt(bc, iv, msg)
-    case PCB:
+		case PCB:
 			out, err = JMT.PCBCDecrypt(bc, iv, msg)
-    case OFB:
+		case OFB:
 			out, err = JMT.OFBDecrypt(bc, iv, msg)
-    case CTR:
+		case CTR:
 			out, err = JMT.CTRDecrypt(bc, nonce, msg)
-    case CFB:
+		case CFB:
 			out, err = JMT.CFBDecrypt(bc, iv, msg)
-    case PRNG:
+		case PRNG:
 			out = JMT.PRNGStreamDecode(state.seed, rng, msg)
 	}
 
-  if err != nil {
-		log.Fatal("Failed to decrypt:", err)
-  }
-  return out, err
+	if err != nil {
+		return []byte{}, err
+		// log.Fatal("Failed to decrypt:", err)
+	}
+	return out, err
 }
