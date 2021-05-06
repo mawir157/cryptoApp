@@ -122,7 +122,7 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	}
 	key := JMT.BytesToWords(keyBytes, false)
 
-	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
+	iv, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid IV")
 	}
@@ -150,15 +150,15 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 		case ECB:
 			out = JMT.ECBEncrypt(bc, msg)
 		case CBC:
-			out = JMT.CBCEncrypt(bc, ivBytes, msg)
+			out = JMT.CBCEncrypt(bc, iv, msg)
 		case PCB:
-			out = JMT.PCBCEncrypt(bc, ivBytes, msg)
+			out = JMT.PCBCEncrypt(bc, iv, msg)
 		case OFB:
-			out = JMT.OFBEncrypt(bc, ivBytes, msg)
+			out = JMT.OFBEncrypt(bc, iv, msg)
 		case CTR:
 			out = JMT.CTREncrypt(bc, nonce, msg)
 		case CFB:
-			out = JMT.CFBEncrypt(bc, ivBytes, msg)
+			out = JMT.CFBEncrypt(bc, iv, msg)
 		case PRNG:
 			_, out = JMT.PRNGStreamEncode(state.seed, rng, msg)
 	}
@@ -172,13 +172,10 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	}
 	key := JMT.BytesToWords(keyBytes, false)
 
-	// var iv [4]JMT.Word
-	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
+	iv, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid IV")
 	}
-	// temp := JMT.BytesToWords(ivBytes, false)
-	// copy(iv[:], temp)
 
 	nonce, err := JMT.ParseFromAscii(state.nonce, false)
  	if err != nil {
@@ -204,15 +201,15 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 		case ECB:
 			out, err = JMT.ECBDecrypt(bc, msg)
 		case CBC:
-			out, err = JMT.CBCDecrypt(bc, ivBytes, msg)
+			out, err = JMT.CBCDecrypt(bc, iv, msg)
 		case PCB:
-			out, err = JMT.PCBCDecrypt(bc, ivBytes, msg)
+			out, err = JMT.PCBCDecrypt(bc, iv, msg)
 		case OFB:
-			out, err = JMT.OFBDecrypt(bc, ivBytes, msg)
+			out, err = JMT.OFBDecrypt(bc, iv, msg)
 		case CTR:
 			out, err = JMT.CTRDecrypt(bc, nonce, msg)
 		case CFB:
-			out, err = JMT.CFBDecrypt(bc, ivBytes, msg)
+			out, err = JMT.CFBDecrypt(bc, iv, msg)
 		case PRNG:
 			out = JMT.PRNGStreamDecode(state.seed, rng, msg)
 	}
