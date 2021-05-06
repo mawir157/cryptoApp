@@ -19,15 +19,16 @@
 package main
 
 import (
+	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"github.com/gotk3/gotk3/gdk"
+    // "github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
-    "math/rand"
-    "time"
+  "math/rand"
+  "time"
 )
-
-import JMT "github.com/mawir157/jmtcrypto"
 
 type Encoding int
 const (
@@ -71,6 +72,10 @@ const (
 	PCG
 )
 
+type HackWidget interface {
+    SetSensitive(bool)
+}
+
 type Config struct {
 	plaintextE  Encoding
 	ciphertextE	Encoding
@@ -82,29 +87,34 @@ type Config struct {
 	rng         PRNGType
 	seed        int
 	valid       bool
+    widgets     map[string](HackWidget)
+}
+
+func (s *Config) addWidget(name string, w HackWidget) {
+    s.widgets[name] = w
 }
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randString(n int) string {
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = rune(letters[rand.Intn(len(letters))])
-    }
-    return string(b)
+func randString(n int, r *rand.Rand) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = rune(letters[r.Intn(len(letters))])
+	}
+	return string(b)
 }
 
 func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ascii":
-	s.plaintextE = Ascii
+		s.plaintextE = Ascii
 	case "base64":
-	s.plaintextE = Base64
+		s.plaintextE = Base64
 	case "hex":
-	s.plaintextE = Hex
+		s.plaintextE = Hex
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.plaintextE = Ascii
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.plaintextE = Ascii
 	}
 
 	return
@@ -113,14 +123,14 @@ func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 func onCTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ascii":
-	s.ciphertextE = Ascii
+		s.ciphertextE = Ascii
 	case "base64":
-	s.ciphertextE = Base64
+		s.ciphertextE = Base64
 	case "hex":
-	s.ciphertextE = Hex
+		s.ciphertextE = Hex
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.ciphertextE = Ascii
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.ciphertextE = Ascii
 	}
 
 	return
@@ -129,10 +139,10 @@ func onCTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "AES":
-	s.cipher = AES
+		s.cipher = AES
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.cipher = AES
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.cipher = AES
 	}
 
 	return
@@ -141,33 +151,55 @@ func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
 func onRNGChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "Mersenne Twister":
-	s.rng = Mersenne
+		s.rng = Mersenne
 	case "PCG":
 		s.rng = PCG
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.rng = Mersenne
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.rng = Mersenne
 	}
 
 	return
+}
+
+func isValidText(s string, enc Encoding) bool {
+	switch enc {
+	case Ascii:
+		return true // can always parse ascii
+	case Base64:
+		_, err := hex.DecodeString(s)
+		return (err == nil)
+	case Hex:
+		_, err := base64.StdEncoding.DecodeString(s)
+		return (err == nil)
+	default:
+		return false
+	}
 }
 
 func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
     switch enc := cb.GetActiveText(); enc {
 	case "ECB":
-	s.modeOfOp = ECB
+    	s.modeOfOp = ECB
+        updateCipherMode(false, true, false, false, true, false, s)
 	case "CBC":
-	s.modeOfOp = CBC
+	   s.modeOfOp = CBC
+        updateCipherMode(false, true, true, false, true, false, s)
 	case "PCB":
-	s.modeOfOp = PCB
+	   s.modeOfOp = PCB
+        updateCipherMode(false, true, true, false, true, false, s)
 	case "OFB":
-	s.modeOfOp = OFB
+	   s.modeOfOp = OFB
+        updateCipherMode(false, true, true, false, true, false, s)
 	case "CTR":
-	s.modeOfOp = CTR
+	   s.modeOfOp = CTR
+        updateCipherMode(false, true, false, true, true, false, s)
 	case "CFB":
-	s.modeOfOp = CFB
+	   s.modeOfOp = CFB
+        updateCipherMode(false, true, true, false, true, false, s)
 	case "PRNG stream":
-	s.modeOfOp = PRNG
+	   s.modeOfOp = PRNG
+        updateCipherMode(true, false, false, false, false, true, s)
 	default:
 	fmt.Printf("Unidentified Encoding%s.\n", enc)
 	s.modeOfOp = ECB
@@ -175,6 +207,59 @@ func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
 
 	return
 }
+
+// 0 - Block Cipher, 1 - Stream Cipher
+func updateCipherMode(seed, key, iv, nonce, prim, rng bool, s *Config) {
+    // set everything to false
+    // for k, _ := range s.widgets {
+    //     s.widgets[k].SetSensitive(false)
+    // }
+    s.widgets["modeCombo"].SetSensitive(true)
+
+    if seed {
+        s.widgets["seedBox"].SetSensitive(true)
+        s.widgets["seedLabel"].SetSensitive(true)
+    }
+
+    if key {
+        s.widgets["keyBox"].SetSensitive(true)
+        s.widgets["keyLabel"].SetSensitive(true)
+    }
+
+    if iv {
+        s.widgets["ivBox"].SetSensitive(true)
+        s.widgets["ivLabel"].SetSensitive(true)
+    }
+
+    if nonce {
+        s.widgets["nonceBox"].SetSensitive(true)
+        s.widgets["nonceLabel"].SetSensitive(true)
+    }
+
+    if prim {
+        s.widgets["primCombo"].SetSensitive(true)
+        s.widgets["primLabel"].SetSensitive(true)
+    }
+
+    if rng {
+        s.widgets["rngCombo"].SetSensitive(true)
+        s.widgets["rngLabel"].SetSensitive(true)
+    }
+
+    return
+}
+
+// func SetActive(s *Config) {
+//     // set everything to false
+//     for k, _ := range s.widgets {
+//         s.widgets[k].SetSensitive(false)
+//     }
+//     // put modeCombo back on
+//     s.widgets["modeCombo"].SetSensitive(false)
+
+//     // step 1 grab the 
+//     mode := s.widgets["modeCombo"].GetActiveText()
+// }
 
 func onKeyChanged(entry *gtk.Entry, s *Config) {
 	s.key, _ = entry.GetText()
@@ -187,17 +272,17 @@ func onKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 	key, _ := entry.GetText()
 	if len(key) != 16 {
 		s.valid = false
-		title := fmt.Sprintf("%s length warning")
+		title := fmt.Sprintf("%s length warning", name)
 		message := fmt.Sprintf("Warning!\n %s must be exactly\n%d bytes.", name, required)
 
 		dialog := makeOKDialog(title, message)
 		dialog.Run()
 		dialog.Destroy()
 		return
-	}
-
-	s.valid = true
-
+	}	else {
+        s.valid = true
+  }
+    
 	return
 }
 
@@ -212,17 +297,16 @@ func onIVLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 
 	if len(v) != required {
 		s.valid = false
-		title := fmt.Sprintf("%s length warning")
+		title := fmt.Sprintf("%s length warning", name)
 		message := fmt.Sprintf("Warning!\n %s must be exactly\n%d bytes.", name, required)
 
 		dialog := makeOKDialog(title, message)
 		dialog.Run()
 		dialog.Destroy()
-		return
-	}
-
-	s.valid = true
-
+	} else {
+        s.valid = true
+    }
+    
 	return
 }
 
@@ -237,17 +321,15 @@ func onNonceLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 
 	if len(v) != required {
 		s.valid = false
-		title := fmt.Sprintf("%s length warning")
+		title := fmt.Sprintf("%s length warning", name)
 		message := fmt.Sprintf("Warning!\n %s must be exactly\n%d bytes.", name, required)
 
 		dialog := makeOKDialog(title, message)
 		dialog.Run()
 		dialog.Destroy()
-
-		return
-	}
-
-	s.valid = true
+    } else {
+        s.valid = true
+    }
 
 	return
 }
@@ -258,6 +340,8 @@ func onSeedChanged(entry *gtk.Entry, s *Config) {
 
 	if err != nil {
 		s.valid = false
+        s.widgets["btnEncrypt"].SetSensitive(false)
+
 		title := "Seed error"
 		message := "Seed must be an integer."
 
@@ -270,119 +354,17 @@ func onSeedChanged(entry *gtk.Entry, s *Config) {
 
 	s.seed = seed
 	s.valid = true
+    s.widgets["btnEncrypt"].SetSensitive(true)
 
 	return
 }
 
 
-func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 
-	text := get_text_from_tview(inBow)
+func validateButton(btn *gtk.Button, s *Config) {
+    btn.SetSensitive(s.valid)
 
-	byteStream := []byte{}
-	var err error
-	switch enc := s.plaintextE; enc {
-	case Ascii:
-		byteStream, err = JMT.ParseFromAscii(text, false)
-	case Base64:
-		byteStream, err = JMT.ParseFromBase64(text, false)
-	case Hex:
-		byteStream, err = JMT.ParseFromHex(text, false)
-	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
-		s.ciphertextE = Ascii
-	}
-
-	encryptedText := ""
-
-	if err != nil {
-		set_text_in_tview(outBox, err.Error())
-		return
-	}
-
-	// fmt.Printf("Encrpt in: %d\n", len(byteStream))
-	byteStream, err = doEncryption(byteStream, s)
-
-	if err != nil {
-		set_text_in_tview(outBox, err.Error())
-		return
-	}
-	// fmt.Printf("Encrpt out: %d\n", len(byteStream))
-
-	switch enc := s.ciphertextE; enc {
-	case Ascii:
-		encryptedText, err = JMT.ParseToAscii(byteStream, false)
-	case Base64:
-		encryptedText, err = JMT.ParseToBase64(byteStream)
-	case Hex:
-		encryptedText, err = JMT.ParseToHex(byteStream)
-	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
-		s.ciphertextE = Ascii
-	}
-
-	if err != nil {
-		set_text_in_tview(outBox, err.Error())
-		return
-	}
-
-	set_text_in_tview(outBox, encryptedText)
-	return
-}
-
-func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
-
-	text := get_text_from_tview(inBow)
-
-	byteStream := []byte{}
-	var err error
-	switch enc := s.ciphertextE; enc {
-	case Ascii:
-		byteStream, err = JMT.ParseFromAscii(text, false)
-	case Base64:
-		byteStream, err = JMT.ParseFromBase64(text, false)
-	case Hex:
-		byteStream, err = JMT.ParseFromHex(text, false)
-	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
-		s.ciphertextE = Ascii
-	}
-
-	if err != nil {
-		set_text_in_tview(outBox, err.Error())
-		return
-	}
-
-	encryptedText := ""
-
-	// fmt.Printf("Decrypt in: %d\n", len(byteStream))
-	byteStream, err = doDecryption(byteStream, s)
-
-	if err != nil {
-		set_text_in_tview(outBox, err.Error())
-		return
-	}
-	// fmt.Printf("Decrypt out: %d\n", len(byteStream))
-
-	switch enc := s.plaintextE; enc {
-	case Ascii:
-		encryptedText, err = JMT.ParseToAscii(byteStream, s.modeOfOp != CTR && s.modeOfOp != PRNG)
-	case Base64:
-		encryptedText, err = JMT.ParseToBase64(byteStream)
-	case Hex:
-		encryptedText, err = JMT.ParseToHex(byteStream)
-	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
-		s.ciphertextE = Ascii
-	}
-
-	if err != nil {
-		set_text_in_tview(outBox, err.Error())
-		return
-	}
-
-	set_text_in_tview(outBox, encryptedText)
-	return
+    return 
 }
 
 func (s *Config) PrintState() {
@@ -402,16 +384,18 @@ direct the other way – in short, the period was so far like the present period
 that some of its noisiest authorities insisted on its being received, for good
 or for evil, in the superlative degree of comparison only.`
 
-    s1 := rand.NewSource(time.Now().UnixNano())
-    r1 := rand.New(s1)
-    keySession   := randString(16)
-    ivSession    := randString(16)
-    nonceSession := randString(8)
-    seedSession  := r1.Intn(50000000) + r1.Intn(50000000)
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	keySession   := randString(16, r1)
+	ivSession    := randString(16, r1)
+	nonceSession := randString(8, r1)
+	seedSession  := r1.Intn(50000000) + r1.Intn(50000000)
 
+	widgets := make(map[string](HackWidget))
 	state := Config{plaintextE:Ascii, ciphertextE:Base64, cipher:AES,
-					modeOfOp:CBC, key:keySession, iv:ivSession,
-					nonce:nonceSession, rng:Mersenne, seed:seedSession, valid:true}
+					modeOfOp:ECB, key:keySession, iv:ivSession,
+					nonce:nonceSession, rng:Mersenne, seed:seedSession,
+                    valid:true, widgets:widgets}
 
 	state.PrintState()
 	gtk.Init(nil)
@@ -423,7 +407,6 @@ or for evil, in the superlative degree of comparison only.`
 		text_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 				 text_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				// plainText := add_text_box(text_box_lhs, "Enter your plaintext here", "PlainText")
 				plainText := add_text_box(text_box_lhs, textMessage, "PlainText")
 
 				encdoings := []string{"ascii", "base64", "hex"}
@@ -450,37 +433,50 @@ or for evil, in the superlative degree of comparison only.`
 			mode_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
 				blockCiphers := []string{"AES"}
-				primitiveCombo, _ := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
+				primCombo, primLabel := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
 								 modes := []string{"ECB", "CBC", "PCB", "OFB", "CTR",
 									"CFB", "PRNG stream"}
 				modeCombo, _ := add_drop_down(mode_box_lhs, "Cipher mode: ", modes, 0)
 
-				primitiveCombo.Connect("changed", onPrimitiveChanged, &state)
+				primCombo.Connect("changed", onPrimitiveChanged, &state)
 				modeCombo.Connect("changed", onModeChanged, &state)
+                state.addWidget("modeCombo", modeCombo)
+                state.addWidget("primCombo", primCombo)
+                state.addWidget("primLabel", primLabel)
 
 				prngs := []string{"Mersenne Twister", "PCG"}
-				rngCombo, _ := add_drop_down(mode_box_lhs, "Pseudo-RNGs: ", prngs, 0)
+				rngCombo, rngLabel := add_drop_down(mode_box_lhs, "Pseudo-RNGs: ", prngs, 0)
 				rngCombo.Connect("changed", onRNGChanged, &state)
+                state.addWidget("rngCombo", rngCombo)
+                state.addWidget("rngLabel", rngLabel)
 
-				seed_box := add_entry_box(mode_box_lhs, "PRNG Seed", strconv.Itoa(state.seed), 8)
-				seed_box.Connect("changed", onSeedChanged, &state)
+				seedBox, seedLabel := add_entry_box(mode_box_lhs, "PRNG Seed", strconv.Itoa(state.seed), 8)
+				seedBox.Connect("changed", onSeedChanged, &state)
+                state.addWidget("seedBox", seedBox)
+                state.addWidget("seedLabel", seedLabel)
 
 		mode_box.PackStart(mode_box_lhs, true, true, 0)
 		addVLine(mode_box, 10)
 
 			mode_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				key_box := add_entry_box(mode_box_rhs, "Key", state.key, 16)
-				key_box.Connect("changed", onKeyChanged, &state)
-				key_box.Connect("focus_out_event", onKeyLoseFocus, &state)
+				keyBox, keyLabel := add_entry_box(mode_box_rhs, "Key", state.key, 16)
+				keyBox.Connect("changed", onKeyChanged, &state)
+				keyBox.Connect("focus_out_event", onKeyLoseFocus, &state)
+                state.addWidget("keyBox", keyBox)
+                state.addWidget("keyLabel", keyLabel)
 
-				iv_box := add_entry_box(mode_box_rhs, "IV", state.iv, 16)
-				iv_box.Connect("changed", onIvChanged, &state)
-				iv_box.Connect("focus_out_event", onIVLoseFocus, &state)
+				ivBox, ivLabel := add_entry_box(mode_box_rhs, "IV", state.iv, 16)
+				ivBox.Connect("changed", onIvChanged, &state)
+				ivBox.Connect("focus_out_event", onIVLoseFocus, &state)
+                state.addWidget("ivBox", ivBox)
+                state.addWidget("ivLabel", ivLabel)
 
-				nonce_box := add_entry_box(mode_box_rhs, "nonce", state.nonce, 8)
-				nonce_box.Connect("changed", onNonceChanged, &state)
-				nonce_box.Connect("focus_out_event", onNonceLoseFocus, &state)
+				nonceBox, nonceLabel := add_entry_box(mode_box_rhs, "nonce", state.nonce, 8)
+				nonceBox.Connect("changed", onNonceChanged, &state)
+				nonceBox.Connect("focus_out_event", onNonceLoseFocus, &state)
+                state.addWidget("nonceBox", nonceBox)
+                state.addWidget("nonceLabel", nonceLabel)
 
 				 mode_box.PackStart(mode_box_rhs, true, true, 0)
 	main_box.PackStart(mode_box, true, true, 0)
@@ -509,12 +505,14 @@ or for evil, in the superlative degree of comparison only.`
 					onEncrypt(plainText, cipherText, &state)
 				})
 				endecrypt_box.Add(btnEncrypt)
+                state.addWidget("btnEncrypt", btnEncrypt)
 
 				btnDecrypt := setup_btn("Decrypt")
 				btnDecrypt.Connect("clicked", func() {
 					onDecrypt(cipherText, plainText, &state)
 				})
 				endecrypt_box.Add(btnDecrypt)
+                state.addWidget("btnDecrypt", btnDecrypt)
 
 				endecrypt_box.SetHAlign(gtk.ALIGN_CENTER)
 
@@ -550,3 +548,32 @@ or for evil, in the superlative degree of comparison only.`
 
     return
 }
+
+/*
+    -------------------------------------------------------------
+    |                       TEXT_BOX                            |
+    | --------------------------------------------------------- |
+    | |                         |                             | |
+    | |     TEXT_BOX_LHS        |        TEXT_BOX_RHS         | |
+    | | ---------------------   |   ---------------------     | |
+    | | |                   |   |   |                   |     | |
+    | | |     TEX_LHS       |   |   |     TEX_RHS       |     | |
+    | | |                   |   |   |                   |     | |
+    | | |                   |   |   |                   |     | |
+    | | ---------------------   |   ---------------------     | |
+    | |                         |                             | |
+    | | | HEX/BASE64/ASCII |V|  |   | HEX/BASE64/ASCII |V|    | |
+    | |                         |                             | |
+    | --------------------------------------------------------| |
+    -------------------------------------------------------------
+    |                         MODE_BOX                          |
+    | --------------------------------------------------------- |
+    | |       MODE_BOX_LHS       |       MODE_BOX_RHS         | |
+    | | |PRIM_DROP|  |ENC_MODE|  |  | KEY_TEXT | | KEY_OK |   | |
+    | | |INFORMATIVE_ERRORS|X|   |                            | |
+    | --------------------------------------------------------- |
+    ------------------------------------------------------------|
+    |                        DO_BOX                             |
+    |                  | ENCRPYT| |DECTRPY|                     |
+    -------------------------------------------------------------
+*/

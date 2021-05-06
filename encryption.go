@@ -2,11 +2,118 @@ package main
 
 import (
 	"errors"
-	// "log"
+	"fmt"
+
+	"github.com/gotk3/gotk3/gtk"
 )
 
 import JMT "github.com/mawir157/jmtcrypto"
 import JMTR "github.com/mawir157/jmtcrypto/rand"
+
+func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
+
+	text := get_text_from_tview(inBow)
+
+	byteStream := []byte{}
+	var err error
+	switch enc := s.plaintextE; enc {
+	case Ascii:
+		byteStream, err = JMT.ParseFromAscii(text, true)
+	case Base64:
+		byteStream, err = JMT.ParseFromBase64(text, false)
+	case Hex:
+		byteStream, err = JMT.ParseFromHex(text, false)
+	default:
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.ciphertextE = Ascii
+	}
+
+	encryptedText := ""
+
+	if err != nil {
+		set_text_in_tview(outBox, err.Error())
+		return
+	}
+
+	byteStream, err = doEncryption(byteStream, s)
+
+	if err != nil {
+		set_text_in_tview(outBox, err.Error())
+		return
+	}
+
+	switch enc := s.ciphertextE; enc {
+	case Ascii:
+		fmt.Println("SHOULD NEVER GET HIT!")
+	case Base64:
+		encryptedText, err = JMT.ParseToBase64(byteStream)
+	case Hex:
+		encryptedText, err = JMT.ParseToHex(byteStream)
+	default:
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.ciphertextE = Ascii
+	}
+
+	if err != nil {
+		set_text_in_tview(outBox, err.Error())
+		return
+	}
+
+	set_text_in_tview(outBox, encryptedText)
+	return
+}
+
+func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
+
+	text := get_text_from_tview(inBow)
+
+	byteStream := []byte{}
+	var err error
+	switch enc := s.ciphertextE; enc {
+	case Ascii:
+		byteStream, err = JMT.ParseFromAscii(text, false)
+	case Base64:
+		byteStream, err = JMT.ParseFromBase64(text, false)
+	case Hex:
+		byteStream, err = JMT.ParseFromHex(text, false)
+	default:
+		s.ciphertextE = Ascii
+	}
+
+	if err != nil {
+		set_text_in_tview(outBox, err.Error())
+		return
+	}
+
+	encryptedText := ""
+
+	byteStream, err = doDecryption(byteStream, s)
+
+	if err != nil {
+		set_text_in_tview(outBox, err.Error())
+		return
+	}
+
+	switch enc := s.plaintextE; enc {
+	case Ascii:
+		encryptedText, err = JMT.ParseToAscii(byteStream, s.modeOfOp != CTR && s.modeOfOp != PRNG)
+	case Base64:
+		encryptedText, err = JMT.ParseToBase64(byteStream)
+	case Hex:
+		encryptedText, err = JMT.ParseToHex(byteStream)
+	default:
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.ciphertextE = Ascii
+	}
+
+	if err != nil {
+		set_text_in_tview(outBox, err.Error())
+		return
+	}
+
+	set_text_in_tview(outBox, encryptedText)
+	return
+}
 
 func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	keyBytes, err := JMT.ParseFromAscii(state.key, false)
@@ -15,13 +122,10 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	}
 	key := JMT.BytesToWords(keyBytes, false)
 
-	var iv [4]JMT.Word
-	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
+	iv, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid IV")
 	}
-	temp := JMT.BytesToWords(ivBytes, false)
-	copy(iv[:], temp)
 
 	nonce, err := JMT.ParseFromAscii(state.nonce, false)
  	if err != nil {
@@ -33,7 +137,6 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 		case AES:
 			bc = JMT.MakeAES(key)
 	}
-
 	var rng JMT.PRNG
 	switch state.rng {
 		case Mersenne:
@@ -69,13 +172,10 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	}
 	key := JMT.BytesToWords(keyBytes, false)
 
-	var iv [4]JMT.Word
-	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
+	iv, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid IV")
 	}
-	temp := JMT.BytesToWords(ivBytes, false)
-	copy(iv[:], temp)
 
 	nonce, err := JMT.ParseFromAscii(state.nonce, false)
  	if err != nil {

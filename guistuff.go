@@ -71,29 +71,34 @@ func set_text_in_tview(tv *gtk.TextView, text string) {
 }
 
 func add_drop_down(box *gtk.Box, label string, options []string, initial int) (ptrCombo *gtk.ComboBoxText, ptrLabel *gtk.Label) {
-    subBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
-    labelBox, err := gtk.LabelNew(label)
-    labelBox.SetJustify(gtk.JUSTIFY_RIGHT)
+  // subBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
+  labelBox, err := gtk.LabelNew(label)
+  labelBox.SetJustify(gtk.JUSTIFY_RIGHT)
 
-    if err != nil {
-        log.Fatal("Failed to make label:", err)
-    }
-    subBox.PackStart(labelBox, true, true, 0)
+  if err != nil {
+    log.Fatal("Failed to make label:", err)
+  }
+  // subBox.PackStart(labelBox, true, true, 0)
 
-    comboBox, err := gtk.ComboBoxTextNew()
-    if err != nil {
-        log.Fatal("Failed to make combobox:", err)
-    }
+  comboBox, err := gtk.ComboBoxTextNew()
+  if err != nil {
+    log.Fatal("Failed to make combobox:", err)
+  }
 
-    for i, v := range options {
-        comboBox.Insert(i, strconv.Itoa(i), v)
-    }
-    comboBox.SetActive(initial)
-    subBox.PackStart(comboBox, true, true, 0)
+  for i, v := range options {
+    comboBox.Insert(i, strconv.Itoa(i), v)
+  }
+  comboBox.SetActive(initial)
+  // subBox.PackStart(comboBox, true, true, 0)
 
-    box.PackStart(subBox, false, true, 0)
+  // box.PackStart(subBox, false, true, 0)
 
-    return comboBox, labelBox
+  table, err := gtk.GridNew()
+	table.Attach(labelBox,0,0,2,1)
+	table.Attach(comboBox,2,0,3,1) 
+	box.PackStart(table, false, true, 0)
+
+  return comboBox, labelBox
 }
 
 func add_text_box(box *gtk.Box, intialText, label string) *gtk.TextView {
@@ -124,27 +129,29 @@ func add_text_box(box *gtk.Box, intialText, label string) *gtk.TextView {
     }
 }
 
-func add_entry_box(box *gtk.Box, label, intialText string, max int) *gtk.Entry {
-    subBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
-    labelBox, err := gtk.LabelNew(label)
-    labelBox.SetJustify(gtk.JUSTIFY_RIGHT)
+func add_entry_box(box *gtk.Box, label, intialText string,
+	                 max int) (*gtk.Entry, *gtk.Label) {
+  labelBox, err := gtk.LabelNew(label + ": ")
+  labelBox.SetJustify(gtk.JUSTIFY_RIGHT)
 
-    if err != nil {
-        log.Fatal("Failed to make label:", err)
-    }
-    subBox.PackStart(labelBox, true, true, 0)
+  if err != nil {
+    log.Fatal("Failed to make label:", err)
+  }
 
-    entryBox, err := gtk.EntryNew()
-    if err != nil {
-        log.Fatal("Failed to make entryBox:", err)
-    }
-    subBox.PackStart(entryBox, true, true, 0)
-    entryBox.SetText(intialText)
-    entryBox.SetMaxLength(max)
+  entryBox, err := gtk.EntryNew()
+  if err != nil {
+    log.Fatal("Failed to make entryBox:", err)
+  }
 
-    box.PackStart(subBox, false, true, 0)
+  entryBox.SetText(intialText)
+  entryBox.SetMaxLength(max)
 
-    return entryBox
+	table, err := gtk.GridNew()
+	table.Attach(labelBox,0,0,2,1)
+	table.Attach(entryBox,2,0,3,1) 
+	box.PackStart(table, false, true, 0)
+
+  return entryBox, labelBox
 }
 
 func addHLine(box *gtk.Box, space uint) *gtk.Separator {
