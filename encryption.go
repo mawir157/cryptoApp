@@ -18,7 +18,7 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	var err error
 	switch enc := s.plaintextE; enc {
 	case Ascii:
-		byteStream, err = JMT.ParseFromAscii(text, false)
+		byteStream, err = JMT.ParseFromAscii(text, true)
 	case Base64:
 		byteStream, err = JMT.ParseFromBase64(text, false)
 	case Hex:
@@ -35,18 +35,16 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 		return
 	}
 
-	// fmt.Printf("Encrpt in: %d\n", len(byteStream))
 	byteStream, err = doEncryption(byteStream, s)
 
 	if err != nil {
 		set_text_in_tview(outBox, err.Error())
 		return
 	}
-	// fmt.Printf("Encrpt out: %d\n", len(byteStream))
 
 	switch enc := s.ciphertextE; enc {
 	case Ascii:
-		encryptedText, err = JMT.ParseToAscii(byteStream, false)
+		fmt.Println("SHOULD NEVER GET HIT!")
 	case Base64:
 		encryptedText, err = JMT.ParseToBase64(byteStream)
 	case Hex:
@@ -79,7 +77,6 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 	case Hex:
 		byteStream, err = JMT.ParseFromHex(text, false)
 	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.ciphertextE = Ascii
 	}
 
@@ -90,14 +87,12 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 
 	encryptedText := ""
 
-	// fmt.Printf("Decrypt in: %d\n", len(byteStream))
 	byteStream, err = doDecryption(byteStream, s)
 
 	if err != nil {
 		set_text_in_tview(outBox, err.Error())
 		return
 	}
-	// fmt.Printf("Decrypt out: %d\n", len(byteStream))
 
 	switch enc := s.plaintextE; enc {
 	case Ascii:
@@ -127,13 +122,10 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	}
 	key := JMT.BytesToWords(keyBytes, false)
 
-	var iv [4]JMT.Word
 	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid IV")
 	}
-	temp := JMT.BytesToWords(ivBytes, false)
-	copy(iv[:], temp)
 
 	nonce, err := JMT.ParseFromAscii(state.nonce, false)
  	if err != nil {
@@ -145,7 +137,6 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 		case AES:
 			bc = JMT.MakeAES(key)
 	}
-
 	var rng JMT.PRNG
 	switch state.rng {
 		case Mersenne:
@@ -159,15 +150,15 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 		case ECB:
 			out = JMT.ECBEncrypt(bc, msg)
 		case CBC:
-			out = JMT.CBCEncrypt(bc, iv, msg)
+			out = JMT.CBCEncrypt(bc, ivBytes, msg)
 		case PCB:
-			out = JMT.PCBCEncrypt(bc, iv, msg)
+			out = JMT.PCBCEncrypt(bc, ivBytes, msg)
 		case OFB:
-			out = JMT.OFBEncrypt(bc, iv, msg)
+			out = JMT.OFBEncrypt(bc, ivBytes, msg)
 		case CTR:
 			out = JMT.CTREncrypt(bc, nonce, msg)
 		case CFB:
-			out = JMT.CFBEncrypt(bc, iv, msg)
+			out = JMT.CFBEncrypt(bc, ivBytes, msg)
 		case PRNG:
 			_, out = JMT.PRNGStreamEncode(state.seed, rng, msg)
 	}
@@ -181,13 +172,13 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	}
 	key := JMT.BytesToWords(keyBytes, false)
 
-	var iv [4]JMT.Word
+	// var iv [4]JMT.Word
 	ivBytes, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid IV")
 	}
-	temp := JMT.BytesToWords(ivBytes, false)
-	copy(iv[:], temp)
+	// temp := JMT.BytesToWords(ivBytes, false)
+	// copy(iv[:], temp)
 
 	nonce, err := JMT.ParseFromAscii(state.nonce, false)
  	if err != nil {
@@ -213,15 +204,15 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 		case ECB:
 			out, err = JMT.ECBDecrypt(bc, msg)
 		case CBC:
-			out, err = JMT.CBCDecrypt(bc, iv, msg)
+			out, err = JMT.CBCDecrypt(bc, ivBytes, msg)
 		case PCB:
-			out, err = JMT.PCBCDecrypt(bc, iv, msg)
+			out, err = JMT.PCBCDecrypt(bc, ivBytes, msg)
 		case OFB:
-			out, err = JMT.OFBDecrypt(bc, iv, msg)
+			out, err = JMT.OFBDecrypt(bc, ivBytes, msg)
 		case CTR:
 			out, err = JMT.CTRDecrypt(bc, nonce, msg)
 		case CFB:
-			out, err = JMT.CFBDecrypt(bc, iv, msg)
+			out, err = JMT.CFBDecrypt(bc, ivBytes, msg)
 		case PRNG:
 			out = JMT.PRNGStreamDecode(state.seed, rng, msg)
 	}

@@ -19,13 +19,15 @@
 package main
 
 import (
+	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"github.com/gotk3/gotk3/gdk"
     // "github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
-    "math/rand"
-    "time"
+  "math/rand"
+  "time"
 )
 
 type Encoding int
@@ -94,25 +96,25 @@ func (s *Config) addWidget(name string, w HackWidget) {
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randString(n int) string {
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = rune(letters[rand.Intn(len(letters))])
-    }
-    return string(b)
+func randString(n int, r *rand.Rand) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = rune(letters[r.Intn(len(letters))])
+	}
+	return string(b)
 }
 
 func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ascii":
-	s.plaintextE = Ascii
+		s.plaintextE = Ascii
 	case "base64":
-	s.plaintextE = Base64
+		s.plaintextE = Base64
 	case "hex":
-	s.plaintextE = Hex
+		s.plaintextE = Hex
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.plaintextE = Ascii
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.plaintextE = Ascii
 	}
 
 	return
@@ -121,14 +123,14 @@ func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 func onCTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ascii":
-	s.ciphertextE = Ascii
+		s.ciphertextE = Ascii
 	case "base64":
-	s.ciphertextE = Base64
+		s.ciphertextE = Base64
 	case "hex":
-	s.ciphertextE = Hex
+		s.ciphertextE = Hex
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.ciphertextE = Ascii
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.ciphertextE = Ascii
 	}
 
 	return
@@ -137,10 +139,10 @@ func onCTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "AES":
-	s.cipher = AES
+		s.cipher = AES
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.cipher = AES
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.cipher = AES
 	}
 
 	return
@@ -149,15 +151,30 @@ func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
 func onRNGChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "Mersenne Twister":
-	s.rng = Mersenne
+		s.rng = Mersenne
 	case "PCG":
 		s.rng = PCG
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.rng = Mersenne
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.rng = Mersenne
 	}
 
 	return
+}
+
+func isValidText(s string, enc Encoding) bool {
+	switch enc {
+	case Ascii:
+		return true // can always parse ascii
+	case Base64:
+		_, err := hex.DecodeString(s)
+		return (err == nil)
+	case Hex:
+		_, err := base64.StdEncoding.DecodeString(s)
+		return (err == nil)
+	default:
+		return false
+	}
 }
 
 func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
@@ -194,9 +211,10 @@ func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
 // 0 - Block Cipher, 1 - Stream Cipher
 func updateCipherMode(seed, key, iv, nonce, prim, rng bool, s *Config) {
     // set everything to false
-    for k, _ := range s.widgets {
-        s.widgets[k].SetSensitive(false)
-    }
+    // for k, _ := range s.widgets {
+    //     s.widgets[k].SetSensitive(false)
+    // }
+    s.widgets["modeCombo"].SetSensitive(true)
 
     if seed {
         s.widgets["seedBox"].SetSensitive(true)
@@ -231,6 +249,18 @@ func updateCipherMode(seed, key, iv, nonce, prim, rng bool, s *Config) {
     return
 }
 
+// func SetActive(s *Config) {
+//     // set everything to false
+//     for k, _ := range s.widgets {
+//         s.widgets[k].SetSensitive(false)
+//     }
+//     // put modeCombo back on
+//     s.widgets["modeCombo"].SetSensitive(false)
+
+//     // step 1 grab the 
+//     mode := s.widgets["modeCombo"].GetActiveText()
+// }
+
 func onKeyChanged(entry *gtk.Entry, s *Config) {
 	s.key, _ = entry.GetText()
 }
@@ -249,9 +279,9 @@ func onKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 		dialog.Run()
 		dialog.Destroy()
 		return
-	} else {
+	}	else {
         s.valid = true
-    }
+  }
     
 	return
 }
@@ -354,16 +384,16 @@ direct the other way – in short, the period was so far like the present period
 that some of its noisiest authorities insisted on its being received, for good
 or for evil, in the superlative degree of comparison only.`
 
-    s1 := rand.NewSource(time.Now().UnixNano())
-    r1 := rand.New(s1)
-    keySession   := randString(16)
-    ivSession    := randString(16)
-    nonceSession := randString(8)
-    seedSession  := r1.Intn(50000000) + r1.Intn(50000000)
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	keySession   := randString(16, r1)
+	ivSession    := randString(16, r1)
+	nonceSession := randString(8, r1)
+	seedSession  := r1.Intn(50000000) + r1.Intn(50000000)
 
-    widgets := make(map[string](HackWidget))
+	widgets := make(map[string](HackWidget))
 	state := Config{plaintextE:Ascii, ciphertextE:Base64, cipher:AES,
-					modeOfOp:CBC, key:keySession, iv:ivSession,
+					modeOfOp:ECB, key:keySession, iv:ivSession,
 					nonce:nonceSession, rng:Mersenne, seed:seedSession,
                     valid:true, widgets:widgets}
 
@@ -410,6 +440,7 @@ or for evil, in the superlative degree of comparison only.`
 
 				primCombo.Connect("changed", onPrimitiveChanged, &state)
 				modeCombo.Connect("changed", onModeChanged, &state)
+                state.addWidget("modeCombo", modeCombo)
                 state.addWidget("primCombo", primCombo)
                 state.addWidget("primLabel", primLabel)
 

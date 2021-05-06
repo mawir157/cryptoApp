@@ -129,7 +129,8 @@ func add_text_box(box *gtk.Box, intialText, label string) *gtk.TextView {
     }
 }
 
-func add_entry_box(box *gtk.Box, label, intialText string, max int) (*gtk.Entry, *gtk.Label) {
+func add_entry_box(box *gtk.Box, label, intialText string,
+	                 max int) (*gtk.Entry, *gtk.Label) {
   labelBox, err := gtk.LabelNew(label + ": ")
   labelBox.SetJustify(gtk.JUSTIFY_RIGHT)
 
