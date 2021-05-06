@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"strconv"
 	"github.com/gotk3/gotk3/gdk"
-    // "github.com/gotk3/gotk3/glib"
+	// "github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
   "math/rand"
   "time"
@@ -64,6 +64,7 @@ const (
 	CTR
 	CFB
 	PRNG
+	NULL
 )
 
 type PRNGType int
@@ -73,25 +74,25 @@ const (
 )
 
 type HackWidget interface {
-    SetSensitive(bool)
+	SetSensitive(bool)
 }
 
 type Config struct {
 	plaintextE  Encoding
 	ciphertextE	Encoding
-    cipher      BCipher
-    modeOfOp    CipherMode
+	cipher      BCipher
+	modeOfOp    CipherMode
 	key         string
 	iv          string
 	nonce       string
 	rng         PRNGType
 	seed        int
 	valid       bool
-    widgets     map[string](HackWidget)
+	widgets     map[string](HackWidget)
 }
 
 func (s *Config) addWidget(name string, w HackWidget) {
-    s.widgets[name] = w
+	s.widgets[name] = w
 }
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -178,31 +179,34 @@ func isValidText(s string, enc Encoding) bool {
 }
 
 func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
-    switch enc := cb.GetActiveText(); enc {
+	switch enc := cb.GetActiveText(); enc {
 	case "ECB":
-    	s.modeOfOp = ECB
-        updateCipherMode(false, true, false, false, true, false, s)
+		s.modeOfOp = ECB
+		updateCipherMode(false, true, false, false, true, false, s)
 	case "CBC":
-	   s.modeOfOp = CBC
-        updateCipherMode(false, true, true, false, true, false, s)
+		s.modeOfOp = CBC
+		updateCipherMode(false, true, true, false, true, false, s)
 	case "PCB":
-	   s.modeOfOp = PCB
-        updateCipherMode(false, true, true, false, true, false, s)
+		s.modeOfOp = PCB
+		updateCipherMode(false, true, true, false, true, false, s)
 	case "OFB":
-	   s.modeOfOp = OFB
-        updateCipherMode(false, true, true, false, true, false, s)
+		s.modeOfOp = OFB
+		updateCipherMode(false, true, true, false, true, false, s)
 	case "CTR":
-	   s.modeOfOp = CTR
-        updateCipherMode(false, true, false, true, true, false, s)
+		s.modeOfOp = CTR
+		updateCipherMode(false, true, false, true, true, false, s)
 	case "CFB":
-	   s.modeOfOp = CFB
-        updateCipherMode(false, true, true, false, true, false, s)
+		s.modeOfOp = CFB
+		updateCipherMode(false, true, true, false, true, false, s)
 	case "PRNG stream":
-	   s.modeOfOp = PRNG
-        updateCipherMode(true, false, false, false, false, true, s)
+		s.modeOfOp = PRNG
+		updateCipherMode(true, false, false, false, false, true, s)
+	case "NULL":
+		s.modeOfOp = NULL
+		updateCipherMode(false, false, false, false, false, false, s)
 	default:
-	fmt.Printf("Unidentified Encoding%s.\n", enc)
-	s.modeOfOp = ECB
+		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		s.modeOfOp = ECB
 	}
 
 	return
@@ -210,55 +214,55 @@ func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
 
 // 0 - Block Cipher, 1 - Stream Cipher
 func updateCipherMode(seed, key, iv, nonce, prim, rng bool, s *Config) {
-    // set everything to false
-    // for k, _ := range s.widgets {
-    //     s.widgets[k].SetSensitive(false)
-    // }
-    s.widgets["modeCombo"].SetSensitive(true)
+	// set everything to false
+	// for k, _ := range s.widgets {
+	//		 s.widgets[k].SetSensitive(false)
+	// }
+  s.widgets["modeCombo"].SetSensitive(true)
 
-    if seed {
-        s.widgets["seedBox"].SetSensitive(true)
-        s.widgets["seedLabel"].SetSensitive(true)
-    }
+	if seed {
+		s.widgets["seedBox"].SetSensitive(true)
+		s.widgets["seedLabel"].SetSensitive(true)
+	}
 
-    if key {
-        s.widgets["keyBox"].SetSensitive(true)
-        s.widgets["keyLabel"].SetSensitive(true)
-    }
+	if key {
+		s.widgets["keyBox"].SetSensitive(true)
+		s.widgets["keyLabel"].SetSensitive(true)
+	}
 
-    if iv {
-        s.widgets["ivBox"].SetSensitive(true)
-        s.widgets["ivLabel"].SetSensitive(true)
-    }
+	if iv {
+		s.widgets["ivBox"].SetSensitive(true)
+		s.widgets["ivLabel"].SetSensitive(true)
+	}
 
-    if nonce {
-        s.widgets["nonceBox"].SetSensitive(true)
-        s.widgets["nonceLabel"].SetSensitive(true)
-    }
+	if nonce {
+		s.widgets["nonceBox"].SetSensitive(true)
+		s.widgets["nonceLabel"].SetSensitive(true)
+	}
 
-    if prim {
-        s.widgets["primCombo"].SetSensitive(true)
-        s.widgets["primLabel"].SetSensitive(true)
-    }
+	if prim {
+		s.widgets["primCombo"].SetSensitive(true)
+		s.widgets["primLabel"].SetSensitive(true)
+	}
 
-    if rng {
-        s.widgets["rngCombo"].SetSensitive(true)
-        s.widgets["rngLabel"].SetSensitive(true)
-    }
+	if rng {
+		s.widgets["rngCombo"].SetSensitive(true)
+		s.widgets["rngLabel"].SetSensitive(true)
+	}
 
-    return
+	return
 }
 
 // func SetActive(s *Config) {
-//     // set everything to false
-//     for k, _ := range s.widgets {
-//         s.widgets[k].SetSensitive(false)
-//     }
-//     // put modeCombo back on
-//     s.widgets["modeCombo"].SetSensitive(false)
+//	 // set everything to false
+//	 for k, _ := range s.widgets {
+//		 s.widgets[k].SetSensitive(false)
+//	 }
+//	 // put modeCombo back on
+//	 s.widgets["modeCombo"].SetSensitive(false)
 
-//     // step 1 grab the 
-//     mode := s.widgets["modeCombo"].GetActiveText()
+//	 // step 1 grab the 
+//	 mode := s.widgets["modeCombo"].GetActiveText()
 // }
 
 func onKeyChanged(entry *gtk.Entry, s *Config) {
@@ -280,9 +284,9 @@ func onKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 		dialog.Destroy()
 		return
 	}	else {
-        s.valid = true
-  }
-    
+		s.valid = true
+	}
+
 	return
 }
 
@@ -304,9 +308,9 @@ func onIVLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 		dialog.Run()
 		dialog.Destroy()
 	} else {
-        s.valid = true
-    }
-    
+		s.valid = true
+	}
+	
 	return
 }
 
@@ -327,9 +331,9 @@ func onNonceLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 		dialog := makeOKDialog(title, message)
 		dialog.Run()
 		dialog.Destroy()
-    } else {
-        s.valid = true
-    }
+	} else {
+		s.valid = true
+	}
 
 	return
 }
@@ -340,7 +344,7 @@ func onSeedChanged(entry *gtk.Entry, s *Config) {
 
 	if err != nil {
 		s.valid = false
-        s.widgets["btnEncrypt"].SetSensitive(false)
+		s.widgets["btnEncrypt"].SetSensitive(false)
 
 		title := "Seed error"
 		message := "Seed must be an integer."
@@ -354,7 +358,7 @@ func onSeedChanged(entry *gtk.Entry, s *Config) {
 
 	s.seed = seed
 	s.valid = true
-    s.widgets["btnEncrypt"].SetSensitive(true)
+	s.widgets["btnEncrypt"].SetSensitive(true)
 
 	return
 }
@@ -362,9 +366,9 @@ func onSeedChanged(entry *gtk.Entry, s *Config) {
 
 
 func validateButton(btn *gtk.Button, s *Config) {
-    btn.SetSensitive(s.valid)
+	btn.SetSensitive(s.valid)
 
-    return 
+	return 
 }
 
 func (s *Config) PrintState() {
@@ -393,9 +397,9 @@ or for evil, in the superlative degree of comparison only.`
 
 	widgets := make(map[string](HackWidget))
 	state := Config{plaintextE:Ascii, ciphertextE:Base64, cipher:AES,
-					modeOfOp:ECB, key:keySession, iv:ivSession,
-					nonce:nonceSession, rng:Mersenne, seed:seedSession,
-                    valid:true, widgets:widgets}
+                  modeOfOp:ECB, key:keySession, iv:ivSession,
+                  nonce:nonceSession, rng:Mersenne, seed:seedSession,
+                  valid:true, widgets:widgets}
 
 	state.PrintState()
 	gtk.Init(nil)
@@ -435,25 +439,25 @@ or for evil, in the superlative degree of comparison only.`
 				blockCiphers := []string{"AES"}
 				primCombo, primLabel := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
 								 modes := []string{"ECB", "CBC", "PCB", "OFB", "CTR",
-									"CFB", "PRNG stream"}
+									"CFB", "PRNG stream", "NULL"}
 				modeCombo, _ := add_drop_down(mode_box_lhs, "Cipher mode: ", modes, 0)
 
 				primCombo.Connect("changed", onPrimitiveChanged, &state)
 				modeCombo.Connect("changed", onModeChanged, &state)
-                state.addWidget("modeCombo", modeCombo)
-                state.addWidget("primCombo", primCombo)
-                state.addWidget("primLabel", primLabel)
+				state.addWidget("modeCombo", modeCombo)
+				state.addWidget("primCombo", primCombo)
+				state.addWidget("primLabel", primLabel)
 
 				prngs := []string{"Mersenne Twister", "PCG"}
 				rngCombo, rngLabel := add_drop_down(mode_box_lhs, "Pseudo-RNGs: ", prngs, 0)
 				rngCombo.Connect("changed", onRNGChanged, &state)
-                state.addWidget("rngCombo", rngCombo)
-                state.addWidget("rngLabel", rngLabel)
+				state.addWidget("rngCombo", rngCombo)
+				state.addWidget("rngLabel", rngLabel)
 
 				seedBox, seedLabel := add_entry_box(mode_box_lhs, "PRNG Seed", strconv.Itoa(state.seed), 8)
 				seedBox.Connect("changed", onSeedChanged, &state)
-                state.addWidget("seedBox", seedBox)
-                state.addWidget("seedLabel", seedLabel)
+				state.addWidget("seedBox", seedBox)
+				state.addWidget("seedLabel", seedLabel)
 
 		mode_box.PackStart(mode_box_lhs, true, true, 0)
 		addVLine(mode_box, 10)
@@ -463,20 +467,20 @@ or for evil, in the superlative degree of comparison only.`
 				keyBox, keyLabel := add_entry_box(mode_box_rhs, "Key", state.key, 16)
 				keyBox.Connect("changed", onKeyChanged, &state)
 				keyBox.Connect("focus_out_event", onKeyLoseFocus, &state)
-                state.addWidget("keyBox", keyBox)
-                state.addWidget("keyLabel", keyLabel)
+				state.addWidget("keyBox", keyBox)
+				state.addWidget("keyLabel", keyLabel)
 
 				ivBox, ivLabel := add_entry_box(mode_box_rhs, "IV", state.iv, 16)
 				ivBox.Connect("changed", onIvChanged, &state)
 				ivBox.Connect("focus_out_event", onIVLoseFocus, &state)
-                state.addWidget("ivBox", ivBox)
-                state.addWidget("ivLabel", ivLabel)
+				state.addWidget("ivBox", ivBox)
+				state.addWidget("ivLabel", ivLabel)
 
 				nonceBox, nonceLabel := add_entry_box(mode_box_rhs, "nonce", state.nonce, 8)
 				nonceBox.Connect("changed", onNonceChanged, &state)
 				nonceBox.Connect("focus_out_event", onNonceLoseFocus, &state)
-                state.addWidget("nonceBox", nonceBox)
-                state.addWidget("nonceLabel", nonceLabel)
+				state.addWidget("nonceBox", nonceBox)
+				state.addWidget("nonceLabel", nonceLabel)
 
 				 mode_box.PackStart(mode_box_rhs, true, true, 0)
 	main_box.PackStart(mode_box, true, true, 0)
@@ -505,14 +509,14 @@ or for evil, in the superlative degree of comparison only.`
 					onEncrypt(plainText, cipherText, &state)
 				})
 				endecrypt_box.Add(btnEncrypt)
-                state.addWidget("btnEncrypt", btnEncrypt)
+				state.addWidget("btnEncrypt", btnEncrypt)
 
 				btnDecrypt := setup_btn("Decrypt")
 				btnDecrypt.Connect("clicked", func() {
 					onDecrypt(cipherText, plainText, &state)
 				})
 				endecrypt_box.Add(btnDecrypt)
-                state.addWidget("btnDecrypt", btnDecrypt)
+				state.addWidget("btnDecrypt", btnDecrypt)
 
 				endecrypt_box.SetHAlign(gtk.ALIGN_CENTER)
 
@@ -546,7 +550,7 @@ or for evil, in the superlative degree of comparison only.`
 	// gtk.MainQuit() is run.
 	gtk.Main()
 
-    return
+	return
 }
 
 /*
