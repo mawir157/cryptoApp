@@ -53,6 +53,7 @@ func PrintEncoding(i Encoding) string {
 type BCipher int
 const (
 	AES    BCipher = iota
+	Camellia
 )
 
 type CipherMode int
@@ -141,6 +142,8 @@ func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
 	switch enc := cb.GetActiveText(); enc {
 	case "AES":
 		s.cipher = AES
+	case "Camellia":
+		s.cipher = Camellia
 	default:
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.cipher = AES
@@ -436,7 +439,7 @@ or for evil, in the superlative degree of comparison only.`
 
 			mode_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				blockCiphers := []string{"AES"}
+				blockCiphers := []string{"AES", "Camellia"}
 				primCombo, primLabel := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
 								 modes := []string{"ECB", "CBC", "PCB", "OFB", "CTR",
 									"CFB", "PRNG stream", "NULL"}

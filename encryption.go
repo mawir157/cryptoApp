@@ -116,11 +116,11 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 }
 
 func doEncryption(msg []byte, state *Config) ([]byte, error) {
-	keyBytes, err := JMT.ParseFromAscii(state.key, false)
+	key, err := JMT.ParseFromAscii(state.key, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
 	}
-	key := JMT.BytesToWords(keyBytes, false)
+	// key := JMT.BytesToWords(keyBytes, false)
 
 	iv, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
@@ -136,6 +136,8 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	switch state.cipher {
 		case AES:
 			bc = JMT.MakeAES(key)
+		case Camellia:
+			bc = JMT.MakeCamellia(key)
 	}
 	var rng JMT.PRNG
 	switch state.rng {
@@ -168,11 +170,11 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 }
 
 func doDecryption(msg []byte, state *Config) ([]byte, error) {
-	keyBytes, err := JMT.ParseFromAscii(state.key, false)
+	key, err := JMT.ParseFromAscii(state.key, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
 	}
-	key := JMT.BytesToWords(keyBytes, false)
+	// key := JMT.BytesToWords(keyBytes, false)
 
 	iv, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
@@ -188,6 +190,8 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	switch state.cipher {
 		case AES:
 			bc = JMT.MakeAES(key)
+		case Camellia:
+			bc = JMT.MakeCamellia(key)
 	}
 
 	var rng JMT.PRNG
