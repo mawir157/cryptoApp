@@ -161,6 +161,8 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 			out = JMT.CFBEncrypt(bc, iv, msg)
 		case PRNG:
 			_, out = JMT.PRNGStreamEncode(state.seed, rng, msg)
+		case NULL:
+			out = msg
 	}
 	return out, nil
 }
@@ -212,6 +214,8 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 			out, err = JMT.CFBDecrypt(bc, iv, msg)
 		case PRNG:
 			out = JMT.PRNGStreamDecode(state.seed, rng, msg)
+		case NULL:
+			out = msg
 	}
 
 	if err != nil {
