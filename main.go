@@ -54,6 +54,7 @@ type BCipher int
 const (
 	AES    BCipher = iota
 	Camellia
+	NULL
 )
 
 type CipherMode int
@@ -65,7 +66,6 @@ const (
 	CTR
 	CFB
 	PRNG
-	NULL
 )
 
 type PRNGType int
@@ -144,6 +144,8 @@ func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
 		s.cipher = AES
 	case "Camellia":
 		s.cipher = Camellia
+	case "NULL":
+		s.cipher = NULL
 	default:
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.cipher = AES
@@ -204,9 +206,6 @@ func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
 	case "PRNG stream":
 		s.modeOfOp = PRNG
 		updateCipherMode(true, false, false, false, false, true, s)
-	case "NULL":
-		s.modeOfOp = NULL
-		updateCipherMode(false, false, false, false, false, false, s)
 	default:
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.modeOfOp = ECB
@@ -387,7 +386,7 @@ it was the age of foolishness, it was the epoch of belief, it was the epoch of
 incredulity, it was the season of Light, it was the season of Darkness, it was
 the spring of hope, it was the winter of despair, we had everything before us,
 we had nothing before us, we were all going direct to Heaven, we were all going
-direct the other way – in short, the period was so far like the present period,
+direct the other way - in short, the period was so far like the present period,
 that some of its noisiest authorities insisted on its being received, for good
 or for evil, in the superlative degree of comparison only.`
 
@@ -439,10 +438,10 @@ or for evil, in the superlative degree of comparison only.`
 
 			mode_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				blockCiphers := []string{"AES", "Camellia"}
+				blockCiphers := []string{"AES", "Camellia", "NULL"}
 				primCombo, primLabel := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
 								 modes := []string{"ECB", "CBC", "PCB", "OFB", "CTR",
-									"CFB", "PRNG stream", "NULL"}
+									"CFB", "PRNG stream"}
 				modeCombo, _ := add_drop_down(mode_box_lhs, "Cipher mode: ", modes, 0)
 
 				primCombo.Connect("changed", onPrimitiveChanged, &state)

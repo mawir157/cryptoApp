@@ -11,14 +11,14 @@ import JMT "github.com/mawir157/jmtcrypto"
 import JMTR "github.com/mawir157/jmtcrypto/rand"
 
 func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
-
 	text := get_text_from_tview(inBow)
 
+	needPad := (s.modeOfOp != CTR) && (s.modeOfOp != PRNG)
 	byteStream := []byte{}
 	var err error
 	switch enc := s.plaintextE; enc {
 	case Ascii:
-		byteStream, err = JMT.ParseFromAscii(text, true)
+		byteStream, err = JMT.ParseFromAscii(text, needPad)
 	case Base64:
 		byteStream, err = JMT.ParseFromBase64(text, false)
 	case Hex:
@@ -94,9 +94,11 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 		return
 	}
 
+	needPad := (s.modeOfOp != CTR) && (s.modeOfOp != PRNG)
+
 	switch enc := s.plaintextE; enc {
 	case Ascii:
-		encryptedText, err = JMT.ParseToAscii(byteStream, s.modeOfOp != CTR && s.modeOfOp != PRNG)
+		encryptedText, err = JMT.ParseToAscii(byteStream, needPad)
 	case Base64:
 		encryptedText, err = JMT.ParseToBase64(byteStream)
 	case Hex:
@@ -120,7 +122,6 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
 	}
-	// key := JMT.BytesToWords(keyBytes, false)
 
 	iv, err := JMT.ParseFromAscii(state.iv, false)
 	if err != nil {
@@ -138,6 +139,8 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 			bc = JMT.MakeAES(key)
 		case Camellia:
 			bc = JMT.MakeCamellia(key)
+		case NULL:
+			bc = JMT.MakeNULL(key)
 	}
 	var rng JMT.PRNG
 	switch state.rng {
@@ -153,18 +156,20 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 			out = JMT.ECBEncrypt(bc, msg)
 		case CBC:
 			out = JMT.CBCEncrypt(bc, iv, msg)
+			out = append(iv, out...)
 		case PCB:
 			out = JMT.PCBCEncrypt(bc, iv, msg)
+			out = append(iv, out...)
 		case OFB:
 			out = JMT.OFBEncrypt(bc, iv, msg)
+			out = append(iv, out...)
 		case CTR:
 			out = JMT.CTREncrypt(bc, nonce, msg)
 		case CFB:
 			out = JMT.CFBEncrypt(bc, iv, msg)
+			out = append(iv, out...)
 		case PRNG:
 			_, out = JMT.PRNGStreamEncode(state.seed, rng, msg)
-		case NULL:
-			out = msg
 	}
 	return out, nil
 }
@@ -173,12 +178,6 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	key, err := JMT.ParseFromAscii(state.key, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
-	}
-	// key := JMT.BytesToWords(keyBytes, false)
-
-	iv, err := JMT.ParseFromAscii(state.iv, false)
-	if err != nil {
-		return []byte{}, errors.New("Invalid IV")
 	}
 
 	nonce, err := JMT.ParseFromAscii(state.nonce, false)
@@ -192,6 +191,8 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 			bc = JMT.MakeAES(key)
 		case Camellia:
 			bc = JMT.MakeCamellia(key)
+		case NULL:
+			bc = JMT.MakeNULL(key)
 	}
 
 	var rng JMT.PRNG
@@ -207,19 +208,17 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 		case ECB:
 			out, err = JMT.ECBDecrypt(bc, msg)
 		case CBC:
-			out, err = JMT.CBCDecrypt(bc, iv, msg)
+			out, err = JMT.CBCDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
 		case PCB:
-			out, err = JMT.PCBCDecrypt(bc, iv, msg)
+			out, err = JMT.PCBCDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
 		case OFB:
-			out, err = JMT.OFBDecrypt(bc, iv, msg)
+			out, err = JMT.OFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
 		case CTR:
 			out, err = JMT.CTRDecrypt(bc, nonce, msg)
 		case CFB:
-			out, err = JMT.CFBDecrypt(bc, iv, msg)
+			out, err = JMT.CFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
 		case PRNG:
 			out = JMT.PRNGStreamDecode(state.seed, rng, msg)
-		case NULL:
-			out = msg
 	}
 
 	if err != nil {
