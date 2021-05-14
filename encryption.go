@@ -8,7 +8,7 @@ import (
 )
 
 import JMT "github.com/mawir157/jmtcrypto"
-import JMTR "github.com/mawir157/jmtcrypto/rand"
+// import JMTR "github.com/mawir157/jmtcrypto/rand"
 
 func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	text := get_text_from_tview(inBow)
@@ -18,7 +18,7 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	var err error
 	switch enc := s.plaintextE; enc {
 	case Ascii:
-		byteStream, err = JMT.ParseFromAscii(text, needPad)
+		byteStream, err = JMT.ParseFromASCII(text, needPad)
 	case Base64:
 		byteStream, err = JMT.ParseFromBase64(text, false)
 	case Hex:
@@ -71,7 +71,7 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 	var err error
 	switch enc := s.ciphertextE; enc {
 	case Ascii:
-		byteStream, err = JMT.ParseFromAscii(text, false)
+		byteStream, err = JMT.ParseFromASCII(text, false)
 	case Base64:
 		byteStream, err = JMT.ParseFromBase64(text, false)
 	case Hex:
@@ -98,7 +98,7 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 
 	switch enc := s.plaintextE; enc {
 	case Ascii:
-		encryptedText, err = JMT.ParseToAscii(byteStream, needPad)
+		encryptedText, err = JMT.ParseToASCII(byteStream, needPad)
 	case Base64:
 		encryptedText, err = JMT.ParseToBase64(byteStream)
 	case Hex:
@@ -118,17 +118,17 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 }
 
 func doEncryption(msg []byte, state *Config) ([]byte, error) {
-	key, err := JMT.ParseFromAscii(state.key, false)
+	key, err := JMT.ParseFromASCII(state.key, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
 	}
 
-	iv, err := JMT.ParseFromAscii(state.iv, false)
+	iv, err := JMT.ParseFromASCII(state.iv, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid IV")
 	}
 
-	nonce, err := JMT.ParseFromAscii(state.nonce, false)
+	nonce, err := JMT.ParseFromASCII(state.nonce, false)
  	if err != nil {
 		return []byte{}, errors.New("Invalid Nonce")
 	}
@@ -145,9 +145,9 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	var rng JMT.PRNG
 	switch state.rng {
 		case Mersenne:
-			rng = JMTR.Mersenne19937Init()
+			rng = JMT.Mersenne19937Init()
 		case PCG:
-			rng = JMTR.PCGInit()
+			rng = JMT.PCGInit()
 	}
 
 	out := []byte{}
@@ -175,12 +175,12 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 }
 
 func doDecryption(msg []byte, state *Config) ([]byte, error) {
-	key, err := JMT.ParseFromAscii(state.key, false)
+	key, err := JMT.ParseFromASCII(state.key, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
 	}
 
-	nonce, err := JMT.ParseFromAscii(state.nonce, false)
+	nonce, err := JMT.ParseFromASCII(state.nonce, false)
  	if err != nil {
 		return []byte{}, errors.New("Invalid Nonce")
 	}
@@ -198,9 +198,9 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	var rng JMT.PRNG
 	switch state.rng {
 		case Mersenne:
-			rng = JMTR.Mersenne19937Init()
+			rng = JMT.Mersenne19937Init()
 		case PCG:
-			rng = JMTR.PCGInit()
+			rng = JMT.PCGInit()
 	}
 
 	out := []byte{}
