@@ -407,6 +407,7 @@ or for evil, in the superlative degree of comparison only.`
 	gtk.Init(nil)
 
 	win := setup_window("Crypto Sandbox")
+	nb, _ := gtk.NotebookNew()
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 ////////////////////////////////////////////////////////////////////////////////
@@ -543,7 +544,36 @@ or for evil, in the superlative degree of comparison only.`
 	main_box.PackStart(do_box, false, true, 10)
 	addHLine(main_box, 10)
 
-	win.Add(main_box)
+	nbTabLabel, _ := gtk.LabelNew("Block Cipher")
+	nb.AppendPage(main_box, nbTabLabel)
+
+	nbMcE, _ := gtk.LabelNew("McEliese Encyrption Content")
+	nbMcETabLab, _ := gtk.LabelNew("McEliese Encyrption")	
+	nb.AppendPage(nbMcE, nbMcETabLab)
+
+	nbAE, _ := gtk.LabelNew("Authenticated Encryption Content")
+	nbAETabLab, _ := gtk.LabelNew("Authenticated Encyrption")	
+	nb.AppendPage(nbAE, nbAETabLab)
+
+	nbStreamCipher, _ := gtk.LabelNew("Stream Cipher Content")
+	nbStreamCipherTabLab, _ := gtk.LabelNew("Stream Cipher")	
+	nb.AppendPage(nbStreamCipher, nbStreamCipherTabLab)
+
+	nbRNG, _ := gtk.LabelNew("RNG Content")
+	nbRNGTabLab, _ := gtk.LabelNew("RNG")	
+	nb.AppendPage(nbRNG, nbRNGTabLab)
+
+	nbHMAC, _ := gtk.LabelNew("HMAC Content")
+	nbHMACTabLab, _ := gtk.LabelNew("HMAC")	
+	nb.AppendPage(nbHMAC, nbHMACTabLab)
+
+	nbSHA, _ := gtk.LabelNew("SHA Content")
+	nbSHATabLab, _ := gtk.LabelNew("SHA")	
+	nb.AppendPage(nbSHA, nbSHATabLab)
+
+	win.Add(nb)
+
+	// win.Add(main_box)
 
 	// Recursively show all widgets contained in this window.
 	win.ShowAll()
