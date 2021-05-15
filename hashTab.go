@@ -110,24 +110,32 @@ func hashTab() (*gtk.Box, *HashTabConfig, error) {
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 		plainText := add_text_box(main_box, LoremIpsum, "Input text")
 
-		IOBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
-		hashes := []string{"SHA256", "SHA512"}
-		hashCombo, _ := add_drop_down(IOBox, "Hash function: ", hashes, 0)
-
 		addHLine(main_box, 10)
 
-		btnHash := setup_btn("Hash")
-		IOBox.Add(btnHash)
+		IOBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
+			hashes := []string{"SHA256", "SHA512"}
+			hashCombo, _ := add_drop_down(IOBox, "Hash function: ", hashes, 0)
 
-		encdoings := []string{"ASCII", "base64", "hex"}
-		inputEncCombo, _ := add_drop_down(IOBox, "Input Encoding: ", encdoings, 0)
-		outputEncCombo, _ := add_drop_down(IOBox, "Output Encoding: ", encdoings[1:], 0)
-		inputEncCombo.Connect("changed", onInputEncodingChanged, &state)
-		outputEncCombo.Connect("changed", onOutputEncodingChanged, &state)
-		// IOBox.Add(inputEncCombo)
-		// IOBox.Add(outputEncCombo)
+			addHLine(IOBox, 10)
 
-		main_box.PackStart(IOBox, true, true, 0)
+			encdoings := []string{"ASCII", "base64", "hex"}
+			inputEncCombo, _ := add_drop_down(IOBox, "Input Encoding: ", encdoings, 0)
+			
+			addHLine(IOBox, 10)
+
+			outputEncCombo, _ := add_drop_down(IOBox, "Output Encoding: ", encdoings[1:], 0)
+			
+			addHLine(IOBox, 10)
+
+			inputEncCombo.Connect("changed", onInputEncodingChanged, &state)
+			outputEncCombo.Connect("changed", onOutputEncodingChanged, &state)
+
+			btnHash := setup_btn("Hash")
+			IOBox.Add(btnHash)
+
+			IOBox.SetHAlign(gtk.ALIGN_CENTER)
+
+		main_box.PackStart(IOBox, false, true, 10)
 
 		addHLine(main_box, 10)
 
