@@ -128,11 +128,6 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 		return []byte{}, errors.New("Invalid IV")
 	}
 
-	nonce, err := JMT.ParseFromASCII(state.nonce, false)
- 	if err != nil {
-		return []byte{}, errors.New("Invalid Nonce")
-	}
-
 	var bc JMT.BlockCipher
 	switch state.cipher {
 		case AES:
@@ -141,13 +136,6 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 			bc = JMT.MakeCamellia(key)
 		case NULL:
 			bc = JMT.MakeNULL(key)
-	}
-	var rng JMT.PRNG
-	switch state.rng {
-		case Mersenne:
-			rng = JMT.Mersenne19937Init()
-		case PCG:
-			rng = JMT.PCGInit()
 	}
 
 	out := []byte{}
@@ -163,13 +151,9 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 		case OFB:
 			out = JMT.OFBEncrypt(bc, iv, msg)
 			out = append(iv, out...)
-		case CTR:
-			out = JMT.CTREncrypt(bc, nonce, msg)
 		case CFB:
 			out = JMT.CFBEncrypt(bc, iv, msg)
 			out = append(iv, out...)
-		case PRNG:
-			_, out = JMT.PRNGStreamEncode(state.seed, rng, msg)
 	}
 	return out, nil
 }
@@ -178,11 +162,6 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	key, err := JMT.ParseFromASCII(state.key, false)
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
-	}
-
-	nonce, err := JMT.ParseFromASCII(state.nonce, false)
- 	if err != nil {
-		return []byte{}, errors.New("Invalid Nonce")
 	}
  	
 	var bc JMT.BlockCipher
@@ -195,14 +174,6 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 			bc = JMT.MakeNULL(key)
 	}
 
-	var rng JMT.PRNG
-	switch state.rng {
-		case Mersenne:
-			rng = JMT.Mersenne19937Init()
-		case PCG:
-			rng = JMT.PCGInit()
-	}
-
 	out := []byte{}
 	switch state.modeOfOp {
 		case ECB:
@@ -213,12 +184,8 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 			out, err = JMT.PCBCDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
 		case OFB:
 			out, err = JMT.OFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
-		case CTR:
-			out, err = JMT.CTRDecrypt(bc, nonce, msg)
 		case CFB:
 			out, err = JMT.CFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
-		case PRNG:
-			out = JMT.PRNGStreamDecode(state.seed, rng, msg)
 	}
 
 	if err != nil {
