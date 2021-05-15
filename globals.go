@@ -39,6 +39,12 @@ const (
 	PCG
 )
 
+type HashMode int
+const (
+	SHA256	HashMode = iota
+	SHA512
+)
+
 type HackWidget interface {
 	SetSensitive(bool)
 }

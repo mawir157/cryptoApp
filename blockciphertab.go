@@ -213,7 +213,7 @@ func blockCipherTab() (*gtk.Box, *Config, error) {
 	keySession   := randString(16, r1)
 	ivSession    := randString(16, r1)
 
-widgets := make(map[string](HackWidget))
+	widgets := make(map[string](HackWidget))
 
 	state := Config{plaintextE:Ascii, ciphertextE:Base64, cipher:AES,
 	                modeOfOp:ECB, key:keySession, iv:ivSession,
@@ -222,7 +222,7 @@ widgets := make(map[string](HackWidget))
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 ////////////////////////////////////////////////////////////////////////////////
 		text_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
-				 text_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
+				text_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
 				plainText := add_text_box(text_box_lhs, TextMessage, "PlainText")
 

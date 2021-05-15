@@ -13,12 +13,11 @@ import JMT "github.com/mawir157/jmtcrypto"
 func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	text := get_text_from_tview(inBow)
 
-	needPad := (s.modeOfOp != CTR) && (s.modeOfOp != PRNG)
 	byteStream := []byte{}
 	var err error
 	switch enc := s.plaintextE; enc {
 	case Ascii:
-		byteStream, err = JMT.ParseFromASCII(text, needPad)
+		byteStream, err = JMT.ParseFromASCII(text, true)
 	case Base64:
 		byteStream, err = JMT.ParseFromBase64(text, false)
 	case Hex:
@@ -94,11 +93,9 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 		return
 	}
 
-	needPad := (s.modeOfOp != CTR) && (s.modeOfOp != PRNG)
-
 	switch enc := s.plaintextE; enc {
 	case Ascii:
-		encryptedText, err = JMT.ParseToASCII(byteStream, needPad)
+		encryptedText, err = JMT.ParseToASCII(byteStream, true)
 	case Base64:
 		encryptedText, err = JMT.ParseToBase64(byteStream)
 	case Hex:

@@ -89,7 +89,8 @@ func main() {
 	nbHMACTabLab, _ := gtk.LabelNew("HMAC")	
 	nb.AppendPage(nbHMAC, nbHMACTabLab)
 
-	nbSHA, _ := gtk.LabelNew("SHA Content")
+	nbSHA, _, _ := hashTab()
+	// nbSHA, _ := gtk.LabelNew("SHA Content")
 	nbSHATabLab, _ := gtk.LabelNew("SHA")	
 	nb.AppendPage(nbSHA, nbSHATabLab)
 
