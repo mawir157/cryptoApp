@@ -1,15 +1,9 @@
 package main
 
 import (
-	// "encoding/hex"
-	// "encoding/base64"
-
-	// "github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 
 	"fmt"
-	// "math/rand"
-  // "time"
 )
 
 import JMT "github.com/mawir157/jmtcrypto"

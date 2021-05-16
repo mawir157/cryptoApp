@@ -176,6 +176,17 @@ func addVLine(box *gtk.Box, space uint) *gtk.Separator {
     return sep
 }
 
+func addButton(box *gtk.Box, label string) *gtk.Button {
+  btn, err := gtk.ButtonNewWithLabel(label)
+  if err != nil {
+      log.Fatal("Unable to create button:", err)
+  }
+
+  box.PackStart(btn, false, true, 0)
+
+  return btn
+}
+
 func makeOKDialog(title, message string) *gtk.Dialog {
 	d, _ := gtk.DialogNew()
 	d.SetTitle(title)
