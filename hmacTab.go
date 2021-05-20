@@ -1,25 +1,37 @@
 package main
 
 import (
+	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 
 	"fmt"
+	"math/rand"
+  "time"
 )
 
 import JMT "github.com/mawir157/jmtcrypto"
 
-type HashTabConfig struct {
+type HMACTabConfig struct {
 	plaintextEnc Encoding
 	hashtextEnc  Encoding
+	key          string
 	mode         HashMode
 	widgets      map[string](HackWidget)
 }
 
-func (s *HashTabConfig) addWidget(name string, w HackWidget) {
+func (s *HMACTabConfig) addWidget(name string, w HackWidget) {
 	s.widgets[name] = w
 }
 
-func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
+func onHMACKeyChanged(entry *gtk.Entry, s *HMACTabConfig) {
+	s.key, _ = entry.GetText()
+}
+
+func onHMACKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *HMACTabConfig) {
+	s.key, _ = entry.GetText()
+}
+
+func onHMAC(inBow, outBox *gtk.TextView, s *HMACTabConfig) {
 	text := get_text_from_tview(inBow)
 
 	hs := JMT.MakeSHA256()
@@ -42,7 +54,8 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 		return
 	}
 
-	byteStream = hs.Hash(byteStream)
+	tempKey,_ := JMT.ParseFromASCII(s.key, false)
+	byteStream = JMT.HMAC(tempKey, byteStream, hs)
 
 	hashHex := ""
 	switch enc := s.hashtextEnc; enc {
@@ -63,7 +76,7 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	return
 }
 
-func onInputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
+func onHMACInputEncodingChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ASCII":
 		s.plaintextEnc = Ascii
@@ -79,7 +92,7 @@ func onInputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
 	return
 }
 
-func onOutputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
+func onHMACOutputEncodingChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ASCII":
 		s.hashtextEnc = Ascii
@@ -95,7 +108,7 @@ func onOutputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
 	return
 }
 
-func onHashChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
+func onHMACHashChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
 	switch enc := cb.GetActiveText(); enc {
 	case "SHA256":
 		s.mode = SHA256
@@ -109,11 +122,14 @@ func onHashChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
 	return
 }
 
-func hashTab() (*gtk.Box, *HashTabConfig, error) {
+func hmacTab() (*gtk.Box, *HMACTabConfig, error) {
 	widgets := make(map[string](HackWidget))
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	keySession := randString(16, r1)
 
-	state := HashTabConfig{plaintextEnc:Ascii, hashtextEnc:Base64, mode:SHA256,
-	                       widgets:widgets}
+	state := HMACTabConfig{plaintextEnc:Ascii, hashtextEnc:Base64, mode:SHA256,
+	                       widgets:widgets, key:keySession}
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 		plainText := add_text_box(main_box, LoremIpsum, "Input text")
@@ -121,6 +137,12 @@ func hashTab() (*gtk.Box, *HashTabConfig, error) {
 		addHLine(main_box, 10)
 
 		IOBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
+			hmacKeyBox, _ := add_entry_box(IOBox, "Key", state.key, -1)
+			hmacKeyBox.Connect("changed", onHMACKeyChanged, &state)
+			hmacKeyBox.Connect("focus_out_event", onHMACKeyLoseFocus, &state)
+
+			addHLine(IOBox, 10)
+
 			hashes := []string{"SHA256", "SHA512"}
 			hashCombo, _ := add_drop_down(IOBox, "Hash function: ", hashes, 0)
 
@@ -135,10 +157,10 @@ func hashTab() (*gtk.Box, *HashTabConfig, error) {
 			
 			addHLine(IOBox, 10)
 
-			inputEncCombo.Connect("changed", onInputEncodingChanged, &state)
-			outputEncCombo.Connect("changed", onOutputEncodingChanged, &state)
+			inputEncCombo.Connect("changed", onHMACInputEncodingChanged, &state)
+			outputEncCombo.Connect("changed", onHMACOutputEncodingChanged, &state)
 
-			btnHash := setup_btn("Hash")
+			btnHash := setup_btn("HMAC")
 			IOBox.Add(btnHash)
 
 			IOBox.SetHAlign(gtk.ALIGN_CENTER)
@@ -147,12 +169,12 @@ func hashTab() (*gtk.Box, *HashTabConfig, error) {
 
 		addHLine(main_box, 10)
 
-		hashText := add_text_box(main_box, "Hash will appear here", "Hash")
+		hashText := add_text_box(main_box, "HMAC will appear here", "HMAC")
 
 		btnHash.Connect("clicked", func() {
-			onHash(plainText, hashText, &state)
+			onHMAC(plainText, hashText, &state)
 		})
-		hashCombo.Connect("changed", onHashChanged, &state) // <- fix
+		hashCombo.Connect("changed", onHMACHashChanged, &state) // <- fix
 
 		state.addWidget("btnHash", btnHash)
 		state.addWidget("hashCombo", hashCombo)

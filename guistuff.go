@@ -144,7 +144,9 @@ func add_entry_box(box *gtk.Box, label, intialText string,
   }
 
   entryBox.SetText(intialText)
-  entryBox.SetMaxLength(max)
+  if max > 0 {
+    entryBox.SetMaxLength(max)
+  }
 
 	table, err := gtk.GridNew()
 	table.Attach(labelBox,0,0,2,1)

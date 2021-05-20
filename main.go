@@ -62,6 +62,7 @@ func main() {
 	gtk.Init(nil)
 
 	win := setup_window("Crypto Sandbox")
+	winBox := setup_box(gtk.ORIENTATION_VERTICAL)
 	nb, _ := gtk.NotebookNew()
 
 	nbBlockCipher, state, _ := blockCipherTab()
@@ -81,23 +82,31 @@ func main() {
 	nbStreamCipherTabLab, _ := gtk.LabelNew("Stream Cipher")	
 	nb.AppendPage(nbStreamCipher, nbStreamCipherTabLab)
 
-	// nbRNG, _ := gtk.LabelNew("RNG Content")
 	nbRNG, _, _ := rngTab()
 	nbRNGTabLab, _ := gtk.LabelNew("RNG")	
 	nb.AppendPage(nbRNG, nbRNGTabLab)
 
-	nbHMAC, _ := gtk.LabelNew("HMAC Content")
+	nbHMAC, _, _ := hmacTab()
 	nbHMACTabLab, _ := gtk.LabelNew("HMAC")	
 	nb.AppendPage(nbHMAC, nbHMACTabLab)
 
 	nbSHA, _, _ := hashTab()
-	// nbSHA, _ := gtk.LabelNew("SHA Content")
 	nbSHATabLab, _ := gtk.LabelNew("SHA")	
 	nb.AppendPage(nbSHA, nbSHATabLab)
 
-	win.Add(nb)
+	winBox.PackStart(nb, true, true, 10)
 
-	// win.Add(main_box)
+	close_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	btnClose := setup_btn("Close")
+	btnClose.Connect("clicked", func() {
+		win.Close()
+	})
+	close_box.Add(btnClose)
+	close_box.SetHAlign(gtk.ALIGN_CENTER)
+
+	winBox.PackStart(close_box, false, true, 0)
+
+	win.Add(winBox)
 
 	// Recursively show all widgets contained in this window.
 	win.ShowAll()
