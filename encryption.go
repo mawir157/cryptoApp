@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/gotk3/gotk3/gtk"
+
+	JMT "github.com/mawir157/jmtcrypto"
 )
 
-import JMT "github.com/mawir157/jmtcrypto"
 // import JMTR "github.com/mawir157/jmtcrypto/rand"
 
 func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
@@ -23,7 +24,7 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	case Hex:
 		byteStream, err = JMT.ParseFromHex(text, false)
 	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		fmt.Printf("Unidentified Encoding %d.\n", enc)
 		s.ciphertextE = Ascii
 	}
 
@@ -49,7 +50,7 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	case Hex:
 		encryptedText, err = JMT.ParseToHex(byteStream)
 	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		fmt.Printf("Unidentified Encoding %d.\n", enc)
 		s.ciphertextE = Ascii
 	}
 
@@ -101,7 +102,7 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 	case Hex:
 		encryptedText, err = JMT.ParseToHex(byteStream)
 	default:
-		fmt.Printf("Unidentified Encoding%s.\n", enc)
+		fmt.Printf("Unidentified Encoding %d.\n", enc)
 		s.ciphertextE = Ascii
 	}
 
@@ -127,30 +128,30 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 
 	var bc JMT.BlockCipher
 	switch state.cipher {
-		case AES:
-			bc = JMT.MakeAES(key)
-		case Camellia:
-			bc = JMT.MakeCamellia(key)
-		case NULL:
-			bc = JMT.MakeNULL(key)
+	case AES:
+		bc = JMT.MakeAES(key)
+	case Camellia:
+		bc = JMT.MakeCamellia(key)
+	case NULL:
+		bc = JMT.MakeNULL(key)
 	}
 
 	out := []byte{}
 	switch state.modeOfOp {
-		case ECB:
-			out = JMT.ECBEncrypt(bc, msg)
-		case CBC:
-			out = JMT.CBCEncrypt(bc, iv, msg)
-			out = append(iv, out...)
-		case PCB:
-			out = JMT.PCBCEncrypt(bc, iv, msg)
-			out = append(iv, out...)
-		case OFB:
-			out = JMT.OFBEncrypt(bc, iv, msg)
-			out = append(iv, out...)
-		case CFB:
-			out = JMT.CFBEncrypt(bc, iv, msg)
-			out = append(iv, out...)
+	case ECB:
+		out = JMT.ECBEncrypt(bc, msg)
+	case CBC:
+		out = JMT.CBCEncrypt(bc, iv, msg)
+		out = append(iv, out...)
+	case PCB:
+		out = JMT.PCBCEncrypt(bc, iv, msg)
+		out = append(iv, out...)
+	case OFB:
+		out = JMT.OFBEncrypt(bc, iv, msg)
+		out = append(iv, out...)
+	case CFB:
+		out = JMT.CFBEncrypt(bc, iv, msg)
+		out = append(iv, out...)
 	}
 	return out, nil
 }
@@ -160,29 +161,29 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	if err != nil {
 		return []byte{}, errors.New("Invalid Key")
 	}
- 	
+
 	var bc JMT.BlockCipher
 	switch state.cipher {
-		case AES:
-			bc = JMT.MakeAES(key)
-		case Camellia:
-			bc = JMT.MakeCamellia(key)
-		case NULL:
-			bc = JMT.MakeNULL(key)
+	case AES:
+		bc = JMT.MakeAES(key)
+	case Camellia:
+		bc = JMT.MakeCamellia(key)
+	case NULL:
+		bc = JMT.MakeNULL(key)
 	}
 
 	out := []byte{}
 	switch state.modeOfOp {
-		case ECB:
-			out, err = JMT.ECBDecrypt(bc, msg)
-		case CBC:
-			out, err = JMT.CBCDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
-		case PCB:
-			out, err = JMT.PCBCDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
-		case OFB:
-			out, err = JMT.OFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
-		case CFB:
-			out, err = JMT.CFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
+	case ECB:
+		out, err = JMT.ECBDecrypt(bc, msg)
+	case CBC:
+		out, err = JMT.CBCDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
+	case PCB:
+		out, err = JMT.PCBCDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
+	case OFB:
+		out, err = JMT.OFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
+	case CFB:
+		out, err = JMT.CFBDecrypt(bc, msg[:bc.BlockSize()], msg[bc.BlockSize():])
 	}
 
 	if err != nil {

@@ -4,9 +4,9 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 
 	"fmt"
-)
 
-import JMT "github.com/mawir157/jmtcrypto"
+	JMT "github.com/mawir157/jmtcrypto"
+)
 
 type HashTabConfig struct {
 	plaintextEnc Encoding
@@ -34,7 +34,7 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	case Hex:
 		byteStream, err = JMT.ParseFromHex(text, false)
 	default:
-		fmt.Printf("Unidentified Encoding (HASH IN)%s.\n", enc)
+		fmt.Printf("Unidentified Encoding (HASH IN) %d.\n", enc)
 	}
 
 	if err != nil {
@@ -51,7 +51,7 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	case Hex:
 		hashHex, err = JMT.ParseToHex(byteStream)
 	default:
-		fmt.Printf("Unidentified Encoding (HASH OUT)%s.\n", enc)
+		fmt.Printf("Unidentified Encoding (HASH OUT) %d.\n", enc)
 	}
 
 	if err != nil {
@@ -112,52 +112,58 @@ func onHashChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
 func hashTab() (*gtk.Box, *HashTabConfig, error) {
 	widgets := make(map[string](HackWidget))
 
-	state := HashTabConfig{plaintextEnc:Ascii, hashtextEnc:Base64, mode:SHA256,
-	                       widgets:widgets}
+	state := HashTabConfig{plaintextEnc: Ascii, hashtextEnc: Base64, mode: SHA256,
+		widgets: widgets}
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
-		plainText := add_text_box(main_box, LoremIpsum, "Input text")
+	plainText := add_text_box(main_box, LoremIpsum, "Input text")
 
-		addHLine(main_box, 10)
+	addHLine(main_box, 10)
 
-		IOBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
-			hashes := []string{"SHA256", "SHA512"}
-			hashCombo, _ := add_drop_down(IOBox, "Hash function: ", hashes, 0)
+	IOBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	hashes := []string{"SHA256", "SHA512"}
+	hashCombo, _ := add_drop_down(IOBox, "Hash function: ", hashes, 0)
 
-			addHLine(IOBox, 10)
+	addHLine(IOBox, 10)
 
-			encdoings := []string{"ASCII", "base64", "hex"}
-			inputEncCombo, _ := add_drop_down(IOBox, "Input Encoding: ", encdoings, 0)
-			
-			addHLine(IOBox, 10)
+	encdoings := []string{"ASCII", "base64", "hex"}
+	inputEncCombo, _ := add_drop_down(IOBox, "Input Encoding: ", encdoings, 0)
 
-			outputEncCombo, _ := add_drop_down(IOBox, "Output Encoding: ", encdoings[1:], 0)
-			
-			addHLine(IOBox, 10)
+	addHLine(IOBox, 10)
 
-			inputEncCombo.Connect("changed", onInputEncodingChanged, &state)
-			outputEncCombo.Connect("changed", onOutputEncodingChanged, &state)
+	outputEncCombo, _ := add_drop_down(IOBox, "Output Encoding: ", encdoings[1:], 0)
 
-			btnHash := setup_btn("Hash")
-			IOBox.Add(btnHash)
+	addHLine(IOBox, 10)
 
-			IOBox.SetHAlign(gtk.ALIGN_CENTER)
+	inputEncCombo.Connect("changed", func() {
+		onInputEncodingChanged(inputEncCombo, &state)
+	})
+	outputEncCombo.Connect("changed", func() {
+		onOutputEncodingChanged(outputEncCombo, &state)
+	})
 
-		main_box.PackStart(IOBox, false, true, 10)
+	btnHash := setup_btn("Hash")
+	IOBox.Add(btnHash)
 
-		addHLine(main_box, 10)
+	IOBox.SetHAlign(gtk.ALIGN_CENTER)
 
-		hashText := add_text_box(main_box, "Hash will appear here", "Hash")
+	main_box.PackStart(IOBox, false, true, 10)
 
-		btnHash.Connect("clicked", func() {
-			onHash(plainText, hashText, &state)
-		})
-		hashCombo.Connect("changed", onHashChanged, &state) // <- fix
+	addHLine(main_box, 10)
 
-		state.addWidget("btnHash", btnHash)
-		state.addWidget("hashCombo", hashCombo)
-		state.addWidget("inputEncCombo", inputEncCombo)
-		state.addWidget("outputEncCombo", outputEncCombo)
+	hashText := add_text_box(main_box, "Hash will appear here", "Hash")
 
-		return main_box, &state, nil
+	btnHash.Connect("clicked", func() {
+		onHash(plainText, hashText, &state)
+	})
+	hashCombo.Connect("changed", func() {
+		onHashChanged(hashCombo, &state)
+	}) // <- fix
+
+	state.addWidget("btnHash", btnHash)
+	state.addWidget("hashCombo", hashCombo)
+	state.addWidget("inputEncCombo", inputEncCombo)
+	state.addWidget("outputEncCombo", outputEncCombo)
+
+	return main_box, &state, nil
 }

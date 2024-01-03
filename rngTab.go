@@ -6,16 +6,16 @@ import (
 
 	"fmt"
 	"strconv"
+
+	JMT "github.com/mawir157/jmtcrypto"
 )
 
-import JMT "github.com/mawir157/jmtcrypto"
-
 type RNGTabConfig struct {
-	rngMode  PRNGType
-	seed     int
-	rng      JMT.PRNG
-	label    *gtk.Label
-	widgets  map[string](HackWidget)
+	rngMode PRNGType
+	seed    int
+	rng     JMT.PRNG
+	label   *gtk.Label
+	widgets map[string](HackWidget)
 }
 
 func (s *RNGTabConfig) print() string {
@@ -26,10 +26,10 @@ func (s *RNGTabConfig) print() string {
 	case PCG:
 		str = "PCG"
 	default:
-		fmt.Printf("Unidentified Encoding (INPUT)%s.\n", enc)
+		fmt.Printf("Unidentified Encoding (INPUT) %d.\n", enc)
 		str = "ERROR"
 	}
-	
+
 	return fmt.Sprintf("%s with seed %d", str, s.seed)
 }
 
@@ -82,7 +82,7 @@ func onRNGReset(s *RNGTabConfig) {
 	case PCG:
 		s.rng = JMT.PCGInit()
 	default:
-		fmt.Printf("Unidentified rng mode %s.\n", s.rngMode)
+		fmt.Printf("Unidentified rng mode %d.\n", s.rngMode)
 	}
 
 	s.rng.Seed(s.seed)
@@ -97,54 +97,59 @@ func rngTab() (*gtk.Box, *RNGTabConfig, error) {
 	widgets := make(map[string](HackWidget))
 	sessionSeed := 5489
 
-	state := RNGTabConfig{rngMode:Mersenne, seed:sessionSeed, widgets:widgets}
-	
+	state := RNGTabConfig{rngMode: Mersenne, seed: sessionSeed, widgets: widgets}
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
-		rngSetupBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	rngSetupBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
-		rngs := []string{"Mersenne", "PCG"}
-		rngCombo, _ := add_drop_down(rngSetupBox, "Pseudo-RNG function: ", rngs, 0)
-		rngCombo.Connect("changed", onRNGChanged, &state)
+	rngs := []string{"Mersenne", "PCG"}
+	rngCombo, _ := add_drop_down(rngSetupBox, "Pseudo-RNG function: ", rngs, 0)
+	rngCombo.Connect("changed", func() {
+		onRNGChanged(rngCombo, &state)
+	})
 
-		seedEntry, _ := add_entry_box(rngSetupBox, "Seed", strconv.Itoa(sessionSeed), 10)
-		seedEntry.Connect("changed", onSeedChanged, &state)
-		seedEntry.Connect("focus_out_event", onSeedLoseFocus, &state)
-		
-		resetBtn := addButton(rngSetupBox, "Reset RNG")
-		resetBtn.Connect("clicked", func() {
-			onRNGReset(&state)
-		})
+	seedEntry, _ := add_entry_box(rngSetupBox, "Seed", strconv.Itoa(sessionSeed), 10)
+	seedEntry.Connect("changed", func() {
+		onSeedChanged(seedEntry, &state)
+	})
+	seedEntry.Connect("focus_out_event", func() {
+		onSeedLoseFocus(seedEntry, nil, &state)
+	})
 
-		main_box.PackStart(rngSetupBox, false, true, 10)
+	resetBtn := addButton(rngSetupBox, "Reset RNG")
+	resetBtn.Connect("clicked", func() {
+		onRNGReset(&state)
+	})
 
-		rngLabel, _ := gtk.LabelNew("Pseudo random number not set")
-		main_box.PackStart(rngLabel, false, true, 10)
+	main_box.PackStart(rngSetupBox, false, true, 10)
 
-		doBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
-		nextBtn := addButton(doBox, "Next")
+	rngLabel, _ := gtk.LabelNew("Pseudo random number not set")
+	main_box.PackStart(rngLabel, false, true, 10)
 
-		valueEntry, _ := add_entry_box(doBox, "Random number", "-", 100)
-		valueEntry.SetCanFocus(false)
-		valueEntry.SetEditable(false)
+	doBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	nextBtn := addButton(doBox, "Next")
 
-		nextBtn.Connect("clicked", func() {
-			onNext(valueEntry, &state)
-		})
-		nextBtn.SetSensitive(false)
+	valueEntry, _ := add_entry_box(doBox, "Random number", "-", 100)
+	valueEntry.SetCanFocus(false)
+	valueEntry.SetEditable(false)
+
+	nextBtn.Connect("clicked", func() {
+		onNext(valueEntry, &state)
+	})
+	nextBtn.SetSensitive(false)
 
 	main_box.PackStart(doBox, false, true, 10)
 
-	state.addWidget("rngCombo",   rngCombo)
-	state.addWidget("seedEntry",  seedEntry)
-	state.addWidget("resetBtn",   resetBtn)
-	state.addWidget("nextBtn",    nextBtn)
+	state.addWidget("rngCombo", rngCombo)
+	state.addWidget("seedEntry", seedEntry)
+	state.addWidget("resetBtn", resetBtn)
+	state.addWidget("nextBtn", nextBtn)
 	state.addWidget("valueEntry", valueEntry)
 	state.label = rngLabel
 
 	onRNGReset(&state)
 
-/*
+	/*
 		plainText := add_text_box(main_box, LoremIpsum, "Input text")
 
 		addHLine(main_box, 10)
@@ -157,11 +162,11 @@ func rngTab() (*gtk.Box, *RNGTabConfig, error) {
 
 			encdoings := []string{"ASCII", "base64", "hex"}
 			inputEncCombo, _ := add_drop_down(IOBox, "Input Encoding: ", encdoings, 0)
-			
+
 			addHLine(IOBox, 10)
 
 			outputEncCombo, _ := add_drop_down(IOBox, "Output Encoding: ", encdoings[1:], 0)
-			
+
 			addHLine(IOBox, 10)
 
 			inputEncCombo.Connect("changed", onInputEncodingChanged, &state)
@@ -188,6 +193,6 @@ func rngTab() (*gtk.Box, *RNGTabConfig, error) {
 		state.addWidget("inputEncCombo", inputEncCombo)
 		state.addWidget("outputEncCombo", outputEncCombo)
 
-*/
-		return main_box, &state, nil
+	*/
+	return main_box, &state, nil
 }

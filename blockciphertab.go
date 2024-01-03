@@ -1,20 +1,20 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/base64"
+	"encoding/hex"
 
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 
 	"fmt"
 	"math/rand"
-  "time"
+	"time"
 )
 
 type Config struct {
 	plaintextE  Encoding
-	ciphertextE	Encoding
+	ciphertextE Encoding
 	cipher      BCipher
 	modeOfOp    CipherMode
 	key         string
@@ -45,7 +45,7 @@ func onKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 		dialog.Run()
 		dialog.Destroy()
 		return
-	}	else {
+	} else {
 		s.valid = true
 	}
 
@@ -72,14 +72,14 @@ func onIVLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 	} else {
 		s.valid = true
 	}
-	
+
 	return
 }
 
 func validateButton(btn *gtk.Button, s *Config) {
 	btn.SetSensitive(s.valid)
 
-	return 
+	return
 }
 
 func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
@@ -182,7 +182,7 @@ func updateCipherMode(seed, key, iv, nonce, prim, rng bool, s *Config) {
 	// for k, _ := range s.widgets {
 	//		 s.widgets[k].SetSensitive(false)
 	// }
-  s.widgets["modeCombo"].SetSensitive(true)
+	s.widgets["modeCombo"].SetSensitive(true)
 
 	if seed {
 		s.widgets["seedBox"].SetSensitive(true)
@@ -210,128 +210,147 @@ func updateCipherMode(seed, key, iv, nonce, prim, rng bool, s *Config) {
 func blockCipherTab() (*gtk.Box, *Config, error) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	keySession   := randString(16, r1)
-	ivSession    := randString(16, r1)
+	keySession := randString(16, r1)
+	ivSession := randString(16, r1)
 
 	widgets := make(map[string](HackWidget))
 
-	state := Config{plaintextE:Ascii, ciphertextE:Base64, cipher:AES,
-	                modeOfOp:ECB, key:keySession, iv:ivSession,
-	                valid:true, widgets:widgets}
+	state := Config{plaintextE: Ascii, ciphertextE: Base64, cipher: AES,
+		modeOfOp: ECB, key: keySession, iv: ivSession,
+		valid: true, widgets: widgets}
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
-////////////////////////////////////////////////////////////////////////////////
-		text_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
-				text_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
+	////////////////////////////////////////////////////////////////////////////////
+	text_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	text_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				plainText := add_text_box(text_box_lhs, TextMessage, "PlainText")
+	plainText := add_text_box(text_box_lhs, TextMessage, "PlainText")
 
-				encdoings := []string{"ascii", "base64", "hex"}
-				ptEncoding, _ := add_drop_down(text_box_lhs, "Encoding: ", encdoings, 0)
-				ptEncoding.Connect("changed", onPTEncodingChanged, &state)
+	encdoings := []string{"ascii", "base64", "hex"}
+	ptEncoding, _ := add_drop_down(text_box_lhs, "Encoding: ", encdoings, 0)
+	ptEncoding.Connect("changed", func() {
+		onPTEncodingChanged(ptEncoding, &state)
+	})
 
-		text_box.PackStart(text_box_lhs, true, true, 0)
-		addVLine(text_box, 10)
+	text_box.PackStart(text_box_lhs, true, true, 0)
+	addVLine(text_box, 10)
 
-			text_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
+	text_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				cipherText := add_text_box(text_box_rhs, "Cipher text here!", "CipherText")
+	cipherText := add_text_box(text_box_rhs, "Cipher text here!", "CipherText")
 
-				ctEncoding, _ := add_drop_down(text_box_rhs, "Encoding: ", encdoings[1:], 0)
-				ctEncoding.Connect("changed", onCTEncodingChanged, &state)
+	ctEncoding, _ := add_drop_down(text_box_rhs, "Encoding: ", encdoings[1:], 0)
+	ctEncoding.Connect("changed", func() {
+		onCTEncodingChanged(ctEncoding, &state)
+	})
 
-		text_box.PackStart(text_box_rhs, true, true, 0)
+	text_box.PackStart(text_box_rhs, true, true, 0)
 
 	main_box.PackStart(text_box, true, true, 0)
 	addHLine(main_box, 10)
-////////////////////////////////////////////////////////////////////////////////
-		mode_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	////////////////////////////////////////////////////////////////////////////////
+	mode_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
-			mode_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
+	mode_box_lhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				blockCiphers := []string{"AES", "Camellia", "NULL"}
-				primCombo, primLabel := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
-								 modes := []string{"ECB", "CBC", "PCB", "OFB", "CFB"}
-				modeCombo, _ := add_drop_down(mode_box_lhs, "Cipher mode: ", modes, 0)
+	blockCiphers := []string{"AES", "Camellia", "NULL"}
+	primCombo, primLabel := add_drop_down(mode_box_lhs, "Block cipher: ", blockCiphers, 0)
+	modes := []string{"ECB", "CBC", "PCB", "OFB", "CFB"}
+	modeCombo, _ := add_drop_down(mode_box_lhs, "Cipher mode: ", modes, 0)
 
-				primCombo.Connect("changed", onPrimitiveChanged, &state)
-				modeCombo.Connect("changed", onModeChanged, &state)
-				state.addWidget("modeCombo", modeCombo)
-				state.addWidget("primCombo", primCombo)
-				state.addWidget("primLabel", primLabel)
+	primCombo.Connect("changed", func() {
+		onPrimitiveChanged(primCombo, &state)
+	})
+	modeCombo.Connect("changed", func() {
+		onModeChanged(modeCombo, &state)
+	})
+	state.addWidget("modeCombo", modeCombo)
+	state.addWidget("primCombo", primCombo)
+	state.addWidget("primLabel", primLabel)
 
-		mode_box.PackStart(mode_box_lhs, true, true, 0)
-		addVLine(mode_box, 10)
+	mode_box.PackStart(mode_box_lhs, true, true, 0)
+	addVLine(mode_box, 10)
 
-			mode_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
+	mode_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
-				keyBox, keyLabel := add_entry_box(mode_box_rhs, "Key", state.key, 16)
-				keyBox.Connect("changed", onKeyChanged, &state)
-				keyBox.Connect("focus_out_event", onKeyLoseFocus, &state)
-				state.addWidget("keyBox", keyBox)
-				state.addWidget("keyLabel", keyLabel)
+	keyBox, keyLabel := add_entry_box(mode_box_rhs, "Key", state.key, 16)
+	keyBox.Connect("changed", func() {
+		onKeyChanged(keyBox, &state)
+	})
 
-				ivBox, ivLabel := add_entry_box(mode_box_rhs, "IV", state.iv, 16)
-				ivBox.Connect("changed", onIvChanged, &state)
-				ivBox.Connect("focus_out_event", onIVLoseFocus, &state)
-				state.addWidget("ivBox", ivBox)
-				state.addWidget("ivLabel", ivLabel)
+	keyBox.Connect("focus_out_event", func() {
+		onKeyLoseFocus(keyBox, nil, &state)
+	})
+	state.addWidget("keyBox", keyBox)
+	state.addWidget("keyLabel", keyLabel)
 
-		mode_box.PackStart(mode_box_rhs, true, true, 0)
+	ivBox, ivLabel := add_entry_box(mode_box_rhs, "IV", state.iv, 16)
+
+	ivBox.Connect("changed", func() {
+		onIvChanged(ivBox, &state)
+	})
+
+	ivBox.Connect("focus_out_event", func() {
+		onIVLoseFocus(ivBox, nil, &state)
+	})
+	state.addWidget("ivBox", ivBox)
+	state.addWidget("ivLabel", ivLabel)
+
+	mode_box.PackStart(mode_box_rhs, true, true, 0)
 	main_box.PackStart(mode_box, true, true, 0)
 	addHLine(main_box, 10)
-////////////////////////////////////////////////////////////////////////////////
-		do_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
-			addHLine(do_box, 10)
+	////////////////////////////////////////////////////////////////////////////////
+	do_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	addHLine(do_box, 10)
 
-			io_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	io_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
-				btnOpen := setup_btn("Open")
-				io_box.Add(btnOpen)
+	btnOpen := setup_btn("Open")
+	io_box.Add(btnOpen)
 
-				btnSave := setup_btn("Save")
-				io_box.Add(btnSave)
+	btnSave := setup_btn("Save")
+	io_box.Add(btnSave)
 
-				io_box.SetHAlign(gtk.ALIGN_CENTER)
+	io_box.SetHAlign(gtk.ALIGN_CENTER)
 
-			do_box.Add(io_box)
-			addHLine(do_box, 10)
+	do_box.Add(io_box)
+	addHLine(do_box, 10)
 
-			endecrypt_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	endecrypt_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
-				btnEncrypt := setup_btn("Encrypt")
-				btnEncrypt.Connect("clicked", func() {
-					onEncrypt(plainText, cipherText, &state)
-				})
-				endecrypt_box.Add(btnEncrypt)
-				state.addWidget("btnEncrypt", btnEncrypt)
+	btnEncrypt := setup_btn("Encrypt")
+	btnEncrypt.Connect("clicked", func() {
+		onEncrypt(plainText, cipherText, &state)
+	})
+	endecrypt_box.Add(btnEncrypt)
+	state.addWidget("btnEncrypt", btnEncrypt)
 
-				btnDecrypt := setup_btn("Decrypt")
-				btnDecrypt.Connect("clicked", func() {
-					onDecrypt(cipherText, plainText, &state)
-				})
-				endecrypt_box.Add(btnDecrypt)
-				state.addWidget("btnDecrypt", btnDecrypt)
+	btnDecrypt := setup_btn("Decrypt")
+	btnDecrypt.Connect("clicked", func() {
+		onDecrypt(cipherText, plainText, &state)
+	})
+	endecrypt_box.Add(btnDecrypt)
+	state.addWidget("btnDecrypt", btnDecrypt)
 
-				endecrypt_box.SetHAlign(gtk.ALIGN_CENTER)
+	endecrypt_box.SetHAlign(gtk.ALIGN_CENTER)
 
-			do_box.Add(endecrypt_box)
-			addHLine(do_box, 10)
+	do_box.Add(endecrypt_box)
+	addHLine(do_box, 10)
 
-			close_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
+	close_box := setup_box(gtk.ORIENTATION_HORIZONTAL)
 
-				btnClose := setup_btn("Close")
-				// btnClose.Connect("clicked", func() {
-				// 	win.Close()
-				// })
-				close_box.Add(btnClose)
+	btnClose := setup_btn("Close")
+	// btnClose.Connect("clicked", func() {
+	// 	win.Close()
+	// })
+	close_box.Add(btnClose)
 
-				close_box.SetHAlign(gtk.ALIGN_CENTER)
+	close_box.SetHAlign(gtk.ALIGN_CENTER)
 
-			do_box.Add(close_box)
-			addHLine(do_box, 10)
+	do_box.Add(close_box)
+	addHLine(do_box, 10)
 
-		do_box.SetHAlign(gtk.ALIGN_CENTER)
+	do_box.SetHAlign(gtk.ALIGN_CENTER)
 
 	main_box.PackStart(do_box, false, true, 10)
 	addHLine(main_box, 10)
