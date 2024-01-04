@@ -22,7 +22,6 @@ func (s *HashTabConfig) addWidget(name string, w HackWidget) {
 func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	text := get_text_from_tview(inBow)
 
-	hs := JMT.MakeSHA256()
 	byteStream := []byte{}
 	var err error
 
@@ -42,7 +41,18 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 		return
 	}
 
-	byteStream = hs.Hash(byteStream)
+	switch mode := s.mode; mode {
+	case SHA256:
+		hs := JMT.MakeSHA256()
+		byteStream = hs.Hash(byteStream)
+	case SHA512:
+		hs := JMT.MakeSHA512()
+		byteStream = hs.Hash(byteStream)
+	default:
+		fmt.Printf("Unidentified Hash function %d.\n", mode)
+		hs := JMT.MakeSHA256()
+		byteStream = hs.Hash(byteStream)
+	}
 
 	hashHex := ""
 	switch enc := s.hashtextEnc; enc {

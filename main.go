@@ -24,19 +24,19 @@ import (
 	// "github.com/gotk3/gotk3/gdk"
 	// "github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
-  // "time"
+	// "time"
 )
 
 func PrintEncoding(i Encoding) string {
 	switch i {
 	case Ascii:
-	return "Ascii"
+		return "Ascii"
 	case Base64:
-	return "Base64"
+		return "Base64"
 	case Hex:
-	return "Hex"
+		return "Hex"
 	default:
-	return "??!"
+		return "??!"
 	}
 }
 
@@ -48,7 +48,7 @@ func PrintEncoding(i Encoding) string {
 //	 // put modeCombo back on
 //	 s.widgets["modeCombo"].SetSensitive(false)
 
-//	 // step 1 grab the 
+//	 // step 1 grab the
 //	 mode := s.widgets["modeCombo"].GetActiveText()
 // }
 
@@ -71,27 +71,27 @@ func main() {
 	nb.AppendPage(nbBlockCipher, nbBlockCipherTabLabel)
 
 	nbMcE, _ := gtk.LabelNew("McEliese Encyrption Content")
-	nbMcETabLab, _ := gtk.LabelNew("McEliese Encyrption")	
+	nbMcETabLab, _ := gtk.LabelNew("McEliese Encyrption")
 	nb.AppendPage(nbMcE, nbMcETabLab)
 
 	nbAE, _ := gtk.LabelNew("Authenticated Encryption Content")
-	nbAETabLab, _ := gtk.LabelNew("Authenticated Encyrption")	
+	nbAETabLab, _ := gtk.LabelNew("Authenticated Encyrption")
 	nb.AppendPage(nbAE, nbAETabLab)
 
 	nbStreamCipher, _ := gtk.LabelNew("Stream Cipher Content")
-	nbStreamCipherTabLab, _ := gtk.LabelNew("Stream Cipher")	
+	nbStreamCipherTabLab, _ := gtk.LabelNew("Stream Cipher")
 	nb.AppendPage(nbStreamCipher, nbStreamCipherTabLab)
 
 	nbRNG, _, _ := rngTab()
-	nbRNGTabLab, _ := gtk.LabelNew("RNG")	
+	nbRNGTabLab, _ := gtk.LabelNew("RNG")
 	nb.AppendPage(nbRNG, nbRNGTabLab)
 
 	nbHMAC, _, _ := hmacTab()
-	nbHMACTabLab, _ := gtk.LabelNew("HMAC")	
+	nbHMACTabLab, _ := gtk.LabelNew("HMAC")
 	nb.AppendPage(nbHMAC, nbHMACTabLab)
 
 	nbSHA, _, _ := hashTab()
-	nbSHATabLab, _ := gtk.LabelNew("SHA")	
+	nbSHATabLab, _ := gtk.LabelNew("Hash")
 	nb.AppendPage(nbSHA, nbSHATabLab)
 
 	winBox.PackStart(nb, true, true, 10)
@@ -119,30 +119,30 @@ func main() {
 }
 
 /*
-    -------------------------------------------------------------
-    |                       TEXT_BOX                            |
-    | --------------------------------------------------------- |
-    | |                         |                             | |
-    | |     TEXT_BOX_LHS        |        TEXT_BOX_RHS         | |
-    | | ---------------------   |   ---------------------     | |
-    | | |                   |   |   |                   |     | |
-    | | |     TEX_LHS       |   |   |     TEX_RHS       |     | |
-    | | |                   |   |   |                   |     | |
-    | | |                   |   |   |                   |     | |
-    | | ---------------------   |   ---------------------     | |
-    | |                         |                             | |
-    | | | HEX/BASE64/ASCII |V|  |   | HEX/BASE64/ASCII |V|    | |
-    | |                         |                             | |
-    | --------------------------------------------------------| |
-    -------------------------------------------------------------
-    |                         MODE_BOX                          |
-    | --------------------------------------------------------- |
-    | |       MODE_BOX_LHS       |       MODE_BOX_RHS         | |
-    | | |PRIM_DROP|  |ENC_MODE|  |  | KEY_TEXT | | KEY_OK |   | |
-    | | |INFORMATIVE_ERRORS|X|   |                            | |
-    | --------------------------------------------------------- |
-    ------------------------------------------------------------|
-    |                        DO_BOX                             |
-    |                  | ENCRPYT| |DECTRPY|                     |
-    -------------------------------------------------------------
+   -------------------------------------------------------------
+   |                       TEXT_BOX                            |
+   | --------------------------------------------------------- |
+   | |                         |                             | |
+   | |     TEXT_BOX_LHS        |        TEXT_BOX_RHS         | |
+   | | ---------------------   |   ---------------------     | |
+   | | |                   |   |   |                   |     | |
+   | | |     TEX_LHS       |   |   |     TEX_RHS       |     | |
+   | | |                   |   |   |                   |     | |
+   | | |                   |   |   |                   |     | |
+   | | ---------------------   |   ---------------------     | |
+   | |                         |                             | |
+   | | | HEX/BASE64/ASCII |V|  |   | HEX/BASE64/ASCII |V|    | |
+   | |                         |                             | |
+   | --------------------------------------------------------| |
+   -------------------------------------------------------------
+   |                         MODE_BOX                          |
+   | --------------------------------------------------------- |
+   | |       MODE_BOX_LHS       |       MODE_BOX_RHS         | |
+   | | |PRIM_DROP|  |ENC_MODE|  |  | KEY_TEXT | | KEY_OK |   | |
+   | | |INFORMATIVE_ERRORS|X|   |                            | |
+   | --------------------------------------------------------- |
+   ------------------------------------------------------------|
+   |                        DO_BOX                             |
+   |                  | ENCRPYT| |DECTRPY|                     |
+   -------------------------------------------------------------
 */
