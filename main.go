@@ -74,7 +74,8 @@ func main() {
 	nbMcETabLab, _ := gtk.LabelNew("McEliese Encyrption")
 	nb.AppendPage(nbMcE, nbMcETabLab)
 
-	nbAE, _ := gtk.LabelNew("Authenticated Encryption Content")
+	// nbAE, _ := gtk.LabelNew("Authenticated Encryption Content")
+	nbAE, _ := authEncryptTab()
 	nbAETabLab, _ := gtk.LabelNew("Authenticated Encyrption")
 	nb.AppendPage(nbAE, nbAETabLab)
 
