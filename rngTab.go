@@ -41,8 +41,6 @@ func onNext(outBox *gtk.Entry, s *RNGTabConfig) {
 	v := s.rng.Next()
 
 	outBox.SetText(strconv.Itoa(v))
-
-	return
 }
 
 func onSeedChanged(seedBox *gtk.Entry, s *RNGTabConfig) {
@@ -71,8 +69,6 @@ func onRNGChanged(cb *gtk.ComboBoxText, s *RNGTabConfig) {
 		fmt.Printf("Unidentified Encoding (INPUT)%s.\n", enc)
 		s.rngMode = Mersenne
 	}
-
-	return
 }
 
 func onRNGReset(s *RNGTabConfig) {
@@ -89,8 +85,6 @@ func onRNGReset(s *RNGTabConfig) {
 
 	s.widgets["nextBtn"].SetSensitive(true)
 	s.label.SetLabel(s.print())
-
-	return
 }
 
 func rngTab() (*gtk.Box, *RNGTabConfig, error) {

@@ -70,7 +70,6 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	}
 
 	set_text_in_tview(outBox, hashHex)
-	return
 }
 
 func onInputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
@@ -85,8 +84,6 @@ func onInputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
 		fmt.Printf("Unidentified Encoding (INPUT)%s.\n", enc)
 		s.plaintextEnc = Ascii
 	}
-
-	return
 }
 
 func onOutputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
@@ -101,8 +98,6 @@ func onOutputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
 		fmt.Printf("Unidentified Encoding (OUTPUT)%s.\n", enc)
 		s.hashtextEnc = Ascii
 	}
-
-	return
 }
 
 func onHashChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
@@ -115,8 +110,6 @@ func onHashChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
 		fmt.Printf("Unidentified Encoding (OUTPUT)%s.\n", enc)
 		s.hashtextEnc = Ascii
 	}
-
-	return
 }
 
 func hashTab() (*gtk.Box, *HashTabConfig, error) {

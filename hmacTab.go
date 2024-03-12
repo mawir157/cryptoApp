@@ -34,9 +34,19 @@ func onHMACKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *HMACTabConfig) {
 func onHMAC(inBow, outBox *gtk.TextView, s *HMACTabConfig) {
 	text := get_text_from_tview(inBow)
 
-	hs := JMT.MakeSHA256()
+	var hs JMT.HashFunction
 	byteStream := []byte{}
 	var err error
+
+	switch mode := s.mode; mode {
+	case SHA256:
+		hs = JMT.MakeSHA256()
+	case SHA512:
+		hs = JMT.MakeSHA512()
+	default:
+		fmt.Printf("Unidentified Hash function %d.\n", mode)
+		hs = JMT.MakeSHA256()
+	}
 
 	switch enc := s.plaintextEnc; enc {
 	case Ascii:
@@ -73,7 +83,6 @@ func onHMAC(inBow, outBox *gtk.TextView, s *HMACTabConfig) {
 	}
 
 	set_text_in_tview(outBox, hashHex)
-	return
 }
 
 func onHMACInputEncodingChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
@@ -88,8 +97,6 @@ func onHMACInputEncodingChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
 		fmt.Printf("Unidentified Encoding (INPUT)%s.\n", enc)
 		s.plaintextEnc = Ascii
 	}
-
-	return
 }
 
 func onHMACOutputEncodingChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
@@ -104,8 +111,6 @@ func onHMACOutputEncodingChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
 		fmt.Printf("Unidentified Encoding (OUTPUT)%s.\n", enc)
 		s.hashtextEnc = Ascii
 	}
-
-	return
 }
 
 func onHMACHashChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
@@ -118,8 +123,6 @@ func onHMACHashChanged(cb *gtk.ComboBoxText, s *HMACTabConfig) {
 		fmt.Printf("Unidentified Encoding (OUTPUT)%s.\n", enc)
 		s.hashtextEnc = Ascii
 	}
-
-	return
 }
 
 func hmacTab() (*gtk.Box, *HMACTabConfig, error) {

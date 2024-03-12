@@ -20,7 +20,7 @@ func aeEncodingChanged(cb *gtk.ComboBoxText, encoding *Encoding) error {
 	case "hex":
 		*encoding = Hex
 	default:
-		return errors.New("Unidentified Encoding (INPUT)")
+		return errors.New("unidentified encoding (INPUT)")
 	}
 
 	return nil
@@ -35,7 +35,7 @@ func aePrimitiveChanged(cb *gtk.ComboBoxText, s *BCipher) error {
 	case "NULL":
 		*s = NULL
 	default:
-		return errors.New("Unidentified primitive")
+		return errors.New("unidentified primitive")
 	}
 
 	return nil
@@ -58,7 +58,7 @@ func aeModeChanged(cb *gtk.ComboBoxText, s *CipherMode) error {
 	case "PRNG stream":
 		*s = PRNG
 	default:
-		return errors.New("Unidentified cipher mode")
+		return errors.New("unidentified cipher mode")
 	}
 
 	return nil
@@ -86,8 +86,6 @@ func aeKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *bool) {
 	} else {
 		*s = true
 	}
-
-	return
 }
 
 func authEncryptTab() (*gtk.Box, error) {

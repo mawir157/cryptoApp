@@ -60,7 +60,6 @@ func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	}
 
 	set_text_in_tview(outBox, encryptedText)
-	return
 }
 
 func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
@@ -112,18 +111,17 @@ func onDecrypt(inBow, outBox *gtk.TextView, s *Config) {
 	}
 
 	set_text_in_tview(outBox, encryptedText)
-	return
 }
 
 func doEncryption(msg []byte, state *Config) ([]byte, error) {
 	key, err := JMT.ParseFromASCII(state.key, false)
 	if err != nil {
-		return []byte{}, errors.New("Invalid Key")
+		return []byte{}, errors.New("invalid key")
 	}
 
 	iv, err := JMT.ParseFromASCII(state.iv, false)
 	if err != nil {
-		return []byte{}, errors.New("Invalid IV")
+		return []byte{}, errors.New("invalid IV")
 	}
 
 	var bc JMT.BlockCipher
@@ -159,7 +157,7 @@ func doEncryption(msg []byte, state *Config) ([]byte, error) {
 func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	key, err := JMT.ParseFromASCII(state.key, false)
 	if err != nil {
-		return []byte{}, errors.New("Invalid Key")
+		return []byte{}, errors.New("invalid key")
 	}
 
 	var bc JMT.BlockCipher

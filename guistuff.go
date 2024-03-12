@@ -93,7 +93,7 @@ func add_drop_down(box *gtk.Box, label string, options []string, initial int) (p
 
 	// box.PackStart(subBox, false, true, 0)
 
-	table, err := gtk.GridNew()
+	table, _ := gtk.GridNew()
 	table.Attach(labelBox, 0, 0, 2, 1)
 	table.Attach(comboBox, 2, 0, 3, 1)
 	box.PackStart(table, false, true, 0)
@@ -142,7 +142,7 @@ func add_entry_box(box *gtk.Box, label, intialText string,
 		entryBox.SetMaxLength(max)
 	}
 
-	table, err := gtk.GridNew()
+	table, _ := gtk.GridNew()
 	table.Attach(labelBox, 0, 0, 2, 1)
 	table.Attach(entryBox, 2, 0, 3, 1)
 	box.PackStart(table, false, true, 0)
@@ -164,7 +164,7 @@ func add_mac_box(box *gtk.Box, label string) (*gtk.Entry, *gtk.Label) {
 	}
 	entryBox.SetHExpand(true)
 
-	table, err := gtk.GridNew()
+	table, _ := gtk.GridNew()
 	table.Attach(labelBox, 0, 0, 2, 1)
 	table.Attach(entryBox, 2, 0, 3, 1)
 	box.PackStart(table, false, true, 0)

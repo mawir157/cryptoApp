@@ -48,8 +48,6 @@ func onKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 	} else {
 		s.valid = true
 	}
-
-	return
 }
 
 func onIvChanged(entry *gtk.Entry, s *Config) {
@@ -72,14 +70,10 @@ func onIVLoseFocus(entry *gtk.Entry, event *gdk.Event, s *Config) {
 	} else {
 		s.valid = true
 	}
-
-	return
 }
 
 func validateButton(btn *gtk.Button, s *Config) {
 	btn.SetSensitive(s.valid)
-
-	return
 }
 
 func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
@@ -94,8 +88,6 @@ func onPTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.plaintextE = Ascii
 	}
-
-	return
 }
 
 func onCTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
@@ -110,8 +102,6 @@ func onCTEncodingChanged(cb *gtk.ComboBoxText, s *Config) {
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.ciphertextE = Ascii
 	}
-
-	return
 }
 
 func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
@@ -126,8 +116,6 @@ func onPrimitiveChanged(cb *gtk.ComboBoxText, s *Config) {
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.cipher = AES
 	}
-
-	return
 }
 
 func isValidText(s string, enc Encoding) bool {
@@ -172,8 +160,6 @@ func onModeChanged(cb *gtk.ComboBoxText, s *Config) {
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		s.modeOfOp = ECB
 	}
-
-	return
 }
 
 // 0 - Block Cipher, 1 - Stream Cipher
@@ -203,8 +189,6 @@ func updateCipherMode(seed, key, iv, nonce, prim, rng bool, s *Config) {
 		s.widgets["primCombo"].SetSensitive(true)
 		s.widgets["primLabel"].SetSensitive(true)
 	}
-
-	return
 }
 
 func blockCipherTab() (*gtk.Box, *Config, error) {

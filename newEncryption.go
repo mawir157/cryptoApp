@@ -12,7 +12,7 @@ func newEncrypt(inBow, outBox *gtk.TextView, encIn Encoding, encOut Encoding,
 	key1str string, ivStr string, cipher BCipher, modeOfOp CipherMode) error {
 	text := get_text_from_tview(inBow)
 
-	byteStream := []byte{}
+	var byteStream []byte
 	var err error
 	switch encIn {
 	case Ascii:
@@ -22,7 +22,7 @@ func newEncrypt(inBow, outBox *gtk.TextView, encIn Encoding, encOut Encoding,
 	case Hex:
 		byteStream, err = JMT.ParseFromHex(text, false)
 	default:
-		return errors.New("Unidentified Plaintext Encoding.\n")
+		return errors.New("unidentified plaintext encoding")
 	}
 
 	encryptedText := ""
@@ -41,13 +41,13 @@ func newEncrypt(inBow, outBox *gtk.TextView, encIn Encoding, encOut Encoding,
 
 	switch encOut {
 	case Ascii:
-		return errors.New("Output encoding cannot be ascii.\n")
+		return errors.New("output encoding cannot be ascii")
 	case Base64:
 		encryptedText, err = JMT.ParseToBase64(byteStream)
 	case Hex:
 		encryptedText, err = JMT.ParseToHex(byteStream)
 	default:
-		return errors.New("Unidentified Ciphertext Encoding.\n")
+		return errors.New("unidentified ciphertext encoding")
 	}
 
 	if err != nil {
@@ -64,7 +64,7 @@ func newDecrypt(inBox, outBox *gtk.TextView, ptEnc Encoding, ctEnc Encoding,
 
 	text := get_text_from_tview(inBox)
 
-	byteStream := []byte{}
+	var byteStream []byte
 	var err error
 	switch ctEnc {
 	case Ascii:
@@ -74,7 +74,7 @@ func newDecrypt(inBox, outBox *gtk.TextView, ptEnc Encoding, ctEnc Encoding,
 	case Hex:
 		byteStream, err = JMT.ParseFromHex(text, false)
 	default:
-		return errors.New("Unidentified Ciphertext Encoding.\n")
+		return errors.New("unidentified ciphertext encoding")
 	}
 
 	if err != nil {
@@ -99,7 +99,7 @@ func newDecrypt(inBox, outBox *gtk.TextView, ptEnc Encoding, ctEnc Encoding,
 	case Hex:
 		encryptedText, err = JMT.ParseToHex(byteStream)
 	default:
-		return errors.New("Unidentified Plaintext Encoding.\n")
+		return errors.New("unidentified plaintext encoding")
 	}
 
 	if err != nil {
@@ -115,12 +115,12 @@ func doNewEncryption(msg []byte, key1str string, ivStr string, cipher BCipher,
 	modeOfOp CipherMode) ([]byte, error) {
 	key, err := JMT.ParseFromASCII(key1str, false)
 	if err != nil {
-		return []byte{}, errors.New("Invalid Key")
+		return []byte{}, errors.New("invalid key")
 	}
 
 	iv, err := JMT.ParseFromASCII(ivStr, false)
 	if err != nil {
-		return []byte{}, errors.New("Invalid IV")
+		return []byte{}, errors.New("invalid IV")
 	}
 
 	var bc JMT.BlockCipher
@@ -157,7 +157,7 @@ func doNewDecryption(msg []byte, key1str string, cipher BCipher,
 	modeOfOp CipherMode) ([]byte, error) {
 	key, err := JMT.ParseFromASCII(key1str, false)
 	if err != nil {
-		return []byte{}, errors.New("Invalid Key")
+		return []byte{}, errors.New("invalid key")
 	}
 
 	var bc JMT.BlockCipher
