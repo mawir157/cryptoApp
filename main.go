@@ -62,6 +62,8 @@ func main() {
 	gtk.Init(nil)
 
 	win := setup_window("Crypto Sandbox")
+	gtk.WindowSetDefaultIconFromFile("./control-system.png")
+
 	winBox := setup_box(gtk.ORIENTATION_VERTICAL)
 	nb, _ := gtk.NotebookNew()
 
