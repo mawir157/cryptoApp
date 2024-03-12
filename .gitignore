@@ -6,3 +6,5 @@
 !*.go
 !go.mod
 !go.sum
+!*.png
+!*.svg
