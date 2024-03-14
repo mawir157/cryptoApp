@@ -85,7 +85,7 @@ func main() {
 	nbStreamCipherTabLab, _ := gtk.LabelNew("Stream Cipher")
 	nb.AppendPage(nbStreamCipher, nbStreamCipherTabLab)
 
-	nbRNG, _, _ := rngTab()
+	nbRNG, _ := rngTab()
 	nbRNGTabLab, _ := gtk.LabelNew("RNG")
 	nb.AppendPage(nbRNG, nbRNGTabLab)
 
@@ -93,7 +93,7 @@ func main() {
 	nbHMACTabLab, _ := gtk.LabelNew("HMAC")
 	nb.AppendPage(nbHMAC, nbHMACTabLab)
 
-	nbSHA, _, _ := hashTab()
+	nbSHA, _ := hashTab()
 	nbSHATabLab, _ := gtk.LabelNew("Hash")
 	nb.AppendPage(nbSHA, nbSHATabLab)
 

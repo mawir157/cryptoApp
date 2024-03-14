@@ -8,24 +8,14 @@ import (
 	JMT "github.com/mawir157/jmtcrypto"
 )
 
-type HashTabConfig struct {
-	plaintextEnc Encoding
-	hashtextEnc  Encoding
-	mode         HashMode
-	widgets      map[string](HackWidget)
-}
-
-func (s *HashTabConfig) addWidget(name string, w HackWidget) {
-	s.widgets[name] = w
-}
-
-func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
+func onHash(inBow, outBox *gtk.TextView, plaintextEnc Encoding,
+	hashtextEnc Encoding, mode HashMode) {
 	text := get_text_from_tview(inBow)
 
 	byteStream := []byte{}
 	var err error
 
-	switch enc := s.plaintextEnc; enc {
+	switch plaintextEnc {
 	case Ascii:
 		byteStream, err = JMT.ParseFromASCII(text, false)
 	case Base64:
@@ -33,7 +23,7 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	case Hex:
 		byteStream, err = JMT.ParseFromHex(text, false)
 	default:
-		fmt.Printf("Unidentified Encoding (HASH IN) %d.\n", enc)
+		fmt.Printf("Unidentified Encoding (HASH IN) %d.\n", plaintextEnc)
 	}
 
 	if err != nil {
@@ -41,7 +31,7 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 		return
 	}
 
-	switch mode := s.mode; mode {
+	switch mode {
 	case SHA256:
 		hs := JMT.MakeSHA256()
 		byteStream = hs.Hash(byteStream)
@@ -55,13 +45,13 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	}
 
 	hashHex := ""
-	switch enc := s.hashtextEnc; enc {
+	switch hashtextEnc {
 	case Base64:
 		hashHex, err = JMT.ParseToBase64(byteStream)
 	case Hex:
 		hashHex, err = JMT.ParseToHex(byteStream)
 	default:
-		fmt.Printf("Unidentified Encoding (HASH OUT) %d.\n", enc)
+		fmt.Printf("Unidentified Encoding (HASH OUT) %d.\n", hashtextEnc)
 	}
 
 	if err != nil {
@@ -72,51 +62,50 @@ func onHash(inBow, outBox *gtk.TextView, s *HashTabConfig) {
 	set_text_in_tview(outBox, hashHex)
 }
 
-func onInputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
+func onInputEncodingChanged(cb *gtk.ComboBoxText, plaintextEnc *Encoding) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ASCII":
-		s.plaintextEnc = Ascii
+		*plaintextEnc = Ascii
 	case "base64":
-		s.plaintextEnc = Base64
+		*plaintextEnc = Base64
 	case "hex":
-		s.plaintextEnc = Hex
+		*plaintextEnc = Hex
 	default:
 		fmt.Printf("Unidentified Encoding (INPUT)%s.\n", enc)
-		s.plaintextEnc = Ascii
+		*plaintextEnc = Ascii
 	}
 }
 
-func onOutputEncodingChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
+func onOutputEncodingChanged(cb *gtk.ComboBoxText, hashtextEnc *Encoding) {
 	switch enc := cb.GetActiveText(); enc {
 	case "ASCII":
-		s.hashtextEnc = Ascii
+		*hashtextEnc = Ascii
 	case "base64":
-		s.hashtextEnc = Base64
+		*hashtextEnc = Base64
 	case "hex":
-		s.hashtextEnc = Hex
+		*hashtextEnc = Hex
 	default:
 		fmt.Printf("Unidentified Encoding (OUTPUT)%s.\n", enc)
-		s.hashtextEnc = Ascii
+		*hashtextEnc = Ascii
 	}
 }
 
-func onHashChanged(cb *gtk.ComboBoxText, s *HashTabConfig) {
-	switch enc := cb.GetActiveText(); enc {
+func onHashChanged(cb *gtk.ComboBoxText, mode *HashMode) {
+	switch hash := cb.GetActiveText(); hash {
 	case "SHA256":
-		s.mode = SHA256
+		*mode = SHA256
 	case "SHA512":
-		s.mode = SHA512
+		*mode = SHA512
 	default:
-		fmt.Printf("Unidentified Encoding (OUTPUT)%s.\n", enc)
-		s.hashtextEnc = Ascii
+		fmt.Printf("Unidentified Hash Function %s.\n", hash)
+		*mode = SHA256
 	}
 }
 
-func hashTab() (*gtk.Box, *HashTabConfig, error) {
-	widgets := make(map[string](HackWidget))
-
-	state := HashTabConfig{plaintextEnc: Ascii, hashtextEnc: Base64, mode: SHA256,
-		widgets: widgets}
+func hashTab() (*gtk.Box, error) {
+	plainTextE := Ascii
+	ciphertextE := Base64
+	hash := SHA256
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 	plainText := add_text_box(main_box, LoremIpsum, "Input text")
@@ -139,10 +128,13 @@ func hashTab() (*gtk.Box, *HashTabConfig, error) {
 	addHLine(IOBox, 10)
 
 	inputEncCombo.Connect("changed", func() {
-		onInputEncodingChanged(inputEncCombo, &state)
+		onInputEncodingChanged(inputEncCombo, &plainTextE)
 	})
 	outputEncCombo.Connect("changed", func() {
-		onOutputEncodingChanged(outputEncCombo, &state)
+		onOutputEncodingChanged(outputEncCombo, &ciphertextE)
+	})
+	hashCombo.Connect("changed", func() {
+		onHashChanged(hashCombo, &hash)
 	})
 
 	btnHash := setup_btn("Hash")
@@ -157,16 +149,8 @@ func hashTab() (*gtk.Box, *HashTabConfig, error) {
 	hashText := add_text_box(main_box, "Hash will appear here", "Hash")
 
 	btnHash.Connect("clicked", func() {
-		onHash(plainText, hashText, &state)
+		onHash(plainText, hashText, plainTextE, ciphertextE, hash)
 	})
-	hashCombo.Connect("changed", func() {
-		onHashChanged(hashCombo, &state)
-	}) // <- fix
 
-	state.addWidget("btnHash", btnHash)
-	state.addWidget("hashCombo", hashCombo)
-	state.addWidget("inputEncCombo", inputEncCombo)
-	state.addWidget("outputEncCombo", outputEncCombo)
-
-	return main_box, &state, nil
+	return main_box, nil
 }

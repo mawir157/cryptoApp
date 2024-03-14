@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 
 	"fmt"
@@ -10,40 +9,28 @@ import (
 	JMT "github.com/mawir157/jmtcrypto"
 )
 
-type RNGTabConfig struct {
-	rngMode PRNGType
-	seed    int
-	rng     JMT.PRNG
-	label   *gtk.Label
-	widgets map[string](HackWidget)
-}
-
-func (s *RNGTabConfig) print() string {
+func humanReadbleRNG(rngMode PRNGType, seed int) string {
 	str := ""
-	switch enc := s.rngMode; enc {
+	switch rngMode {
 	case Mersenne:
 		str = "Mersenne twister"
 	case PCG:
 		str = "PCG"
 	default:
-		fmt.Printf("Unidentified Encoding (INPUT) %d.\n", enc)
+		fmt.Printf("Unidentified Encoding (INPUT) %d.\n", rngMode)
 		str = "ERROR"
 	}
 
-	return fmt.Sprintf("%s with seed %d", str, s.seed)
+	return fmt.Sprintf("%s with seed %d", str, seed)
 }
 
-func (s *RNGTabConfig) addWidget(name string, w HackWidget) {
-	s.widgets[name] = w
-}
-
-func onNext(outBox *gtk.Entry, s *RNGTabConfig) {
-	v := s.rng.Next()
+func onNext(outBox *gtk.Entry, rng *JMT.PRNG) {
+	v := (*rng).Next()
 
 	outBox.SetText(strconv.Itoa(v))
 }
 
-func onSeedChanged(seedBox *gtk.Entry, s *RNGTabConfig) {
+func onSeedChanged(seedBox *gtk.Entry, seed *int) {
 	v, _ := seedBox.GetText()
 
 	i, err := strconv.Atoi(v)
@@ -52,46 +39,48 @@ func onSeedChanged(seedBox *gtk.Entry, s *RNGTabConfig) {
 		return
 	}
 
-	s.seed = i
+	*seed = i
 }
 
-func onSeedLoseFocus(seedBox *gtk.Entry, event *gdk.Event, s *RNGTabConfig) {
-	onSeedChanged(seedBox, s)
+func onSeedLoseFocus(seedBox *gtk.Entry, seed *int) {
+	onSeedChanged(seedBox, seed)
 }
 
-func onRNGChanged(cb *gtk.ComboBoxText, s *RNGTabConfig) {
+func onRNGChanged(cb *gtk.ComboBoxText, rngMode *PRNGType) {
 	switch enc := cb.GetActiveText(); enc {
 	case "Mersenne":
-		s.rngMode = Mersenne
+		*rngMode = Mersenne
 	case "PCG":
-		s.rngMode = PCG
+		*rngMode = PCG
 	default:
 		fmt.Printf("Unidentified Encoding (INPUT)%s.\n", enc)
-		s.rngMode = Mersenne
+		*rngMode = Mersenne
 	}
 }
 
-func onRNGReset(s *RNGTabConfig) {
-	switch s.rngMode {
+func onRNGReset(rngMode PRNGType, rng *JMT.PRNG, seed int, btn *gtk.Button,
+	lbl *gtk.Label) {
+	switch rngMode {
 	case Mersenne:
-		s.rng = JMT.Mersenne19937Init()
+		*rng = JMT.Mersenne19937Init()
 	case PCG:
-		s.rng = JMT.PCGInit()
+		*rng = JMT.PCGInit()
 	default:
-		fmt.Printf("Unidentified rng mode %d.\n", s.rngMode)
+		fmt.Printf("Unidentified rng mode %d.\n", rngMode)
 	}
 
-	s.rng.Seed(s.seed)
+	(*rng).Seed(seed)
 
-	s.widgets["nextBtn"].SetSensitive(true)
-	s.label.SetLabel(s.print())
+	btn.SetSensitive(true)
+	lbl.SetLabel(humanReadbleRNG(rngMode, seed))
 }
 
-func rngTab() (*gtk.Box, *RNGTabConfig, error) {
-	widgets := make(map[string](HackWidget))
+func rngTab() (*gtk.Box, error) {
 	sessionSeed := 5489
 
-	state := RNGTabConfig{rngMode: Mersenne, seed: sessionSeed, widgets: widgets}
+	rngMode := Mersenne
+	seed := sessionSeed
+	var rng JMT.PRNG
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 	rngSetupBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
@@ -99,20 +88,15 @@ func rngTab() (*gtk.Box, *RNGTabConfig, error) {
 	rngs := []string{"Mersenne", "PCG"}
 	rngCombo, _ := add_drop_down(rngSetupBox, "Pseudo-RNG function: ", rngs, 0)
 	rngCombo.Connect("changed", func() {
-		onRNGChanged(rngCombo, &state)
+		onRNGChanged(rngCombo, &rngMode)
 	})
 
 	seedEntry, _ := add_entry_box(rngSetupBox, "Seed", strconv.Itoa(sessionSeed), 10)
 	seedEntry.Connect("changed", func() {
-		onSeedChanged(seedEntry, &state)
+		onSeedChanged(seedEntry, &seed)
 	})
 	seedEntry.Connect("focus_out_event", func() {
-		onSeedLoseFocus(seedEntry, nil, &state)
-	})
-
-	resetBtn := addButton(rngSetupBox, "Reset RNG")
-	resetBtn.Connect("clicked", func() {
-		onRNGReset(&state)
+		onSeedLoseFocus(seedEntry, &seed)
 	})
 
 	main_box.PackStart(rngSetupBox, false, true, 10)
@@ -128,65 +112,18 @@ func rngTab() (*gtk.Box, *RNGTabConfig, error) {
 	valueEntry.SetEditable(false)
 
 	nextBtn.Connect("clicked", func() {
-		onNext(valueEntry, &state)
+		onNext(valueEntry, &rng)
 	})
 	nextBtn.SetSensitive(false)
 
+	resetBtn := addButton(rngSetupBox, "Reset RNG")
+	resetBtn.Connect("clicked", func() {
+		onRNGReset(rngMode, &rng, seed, nextBtn, rngLabel)
+	})
+
 	main_box.PackStart(doBox, false, true, 10)
 
-	state.addWidget("rngCombo", rngCombo)
-	state.addWidget("seedEntry", seedEntry)
-	state.addWidget("resetBtn", resetBtn)
-	state.addWidget("nextBtn", nextBtn)
-	state.addWidget("valueEntry", valueEntry)
-	state.label = rngLabel
+	onRNGReset(rngMode, &rng, seed, nextBtn, rngLabel)
 
-	onRNGReset(&state)
-
-	/*
-		plainText := add_text_box(main_box, LoremIpsum, "Input text")
-
-		addHLine(main_box, 10)
-
-		IOBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
-			hashes := []string{"SHA256", "SHA512"}
-			hashCombo, _ := add_drop_down(IOBox, "Hash function: ", hashes, 0)
-
-			addHLine(IOBox, 10)
-
-			encdoings := []string{"ASCII", "base64", "hex"}
-			inputEncCombo, _ := add_drop_down(IOBox, "Input Encoding: ", encdoings, 0)
-
-			addHLine(IOBox, 10)
-
-			outputEncCombo, _ := add_drop_down(IOBox, "Output Encoding: ", encdoings[1:], 0)
-
-			addHLine(IOBox, 10)
-
-			inputEncCombo.Connect("changed", onInputEncodingChanged, &state)
-			outputEncCombo.Connect("changed", onOutputEncodingChanged, &state)
-
-			btnHash := setup_btn("Hash")
-			IOBox.Add(btnHash)
-
-			IOBox.SetHAlign(gtk.ALIGN_CENTER)
-
-		main_box.PackStart(IOBox, false, true, 10)
-
-		addHLine(main_box, 10)
-
-		hashText := add_text_box(main_box, "Hash will appear here", "Hash")
-
-		btnHash.Connect("clicked", func() {
-			onHash(plainText, hashText, &state)
-		})
-		hashCombo.Connect("changed", onPrimitiveChanged, &state)
-
-		state.addWidget("btnHash", btnHash)
-		state.addWidget("hashCombo", hashCombo)
-		state.addWidget("inputEncCombo", inputEncCombo)
-		state.addWidget("outputEncCombo", outputEncCombo)
-
-	*/
-	return main_box, &state, nil
+	return main_box, nil
 }
