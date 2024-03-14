@@ -8,7 +8,7 @@ import (
 	JMT "github.com/mawir157/jmtcrypto"
 )
 
-func newEncrypt(inBow, outBox *gtk.TextView, encIn Encoding, encOut Encoding,
+func encrypt(inBow, outBox *gtk.TextView, encIn Encoding, encOut Encoding,
 	key1str string, ivStr string, cipher BCipher, modeOfOp CipherMode) error {
 	text := get_text_from_tview(inBow)
 
@@ -32,7 +32,7 @@ func newEncrypt(inBow, outBox *gtk.TextView, encIn Encoding, encOut Encoding,
 		return err
 	}
 
-	byteStream, err = doNewEncryption(byteStream, key1str, ivStr, cipher, modeOfOp)
+	byteStream, err = doEncryption(byteStream, key1str, ivStr, cipher, modeOfOp)
 
 	if err != nil {
 		set_text_in_tview(outBox, err.Error())
@@ -59,7 +59,7 @@ func newEncrypt(inBow, outBox *gtk.TextView, encIn Encoding, encOut Encoding,
 	return nil
 }
 
-func newDecrypt(inBox, outBox *gtk.TextView, ptEnc Encoding, ctEnc Encoding,
+func decrypt(inBox, outBox *gtk.TextView, ptEnc Encoding, ctEnc Encoding,
 	key1str string, cipher BCipher, modeOfOp CipherMode) error {
 
 	text := get_text_from_tview(inBox)
@@ -84,7 +84,7 @@ func newDecrypt(inBox, outBox *gtk.TextView, ptEnc Encoding, ctEnc Encoding,
 
 	encryptedText := ""
 
-	byteStream, err = doNewDecryption(byteStream, key1str, cipher, modeOfOp)
+	byteStream, err = doDecryption(byteStream, key1str, cipher, modeOfOp)
 
 	if err != nil {
 		set_text_in_tview(outBox, err.Error())
@@ -111,7 +111,7 @@ func newDecrypt(inBox, outBox *gtk.TextView, ptEnc Encoding, ctEnc Encoding,
 	return nil
 }
 
-func doNewEncryption(msg []byte, key1str string, ivStr string, cipher BCipher,
+func doEncryption(msg []byte, key1str string, ivStr string, cipher BCipher,
 	modeOfOp CipherMode) ([]byte, error) {
 	key, err := JMT.ParseFromASCII(key1str, false)
 	if err != nil {
@@ -153,7 +153,7 @@ func doNewEncryption(msg []byte, key1str string, ivStr string, cipher BCipher,
 	return out, nil
 }
 
-func doNewDecryption(msg []byte, key1str string, cipher BCipher,
+func doDecryption(msg []byte, key1str string, cipher BCipher,
 	modeOfOp CipherMode) ([]byte, error) {
 	key, err := JMT.ParseFromASCII(key1str, false)
 	if err != nil {

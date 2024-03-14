@@ -253,14 +253,14 @@ func blockCipherTab() (*gtk.Box, error) {
 
 	btnEncrypt := setup_btn("Encrypt")
 	btnEncrypt.Connect("clicked", func() {
-		newEncrypt(plainText, cipherText, plaintextE, ciphertextE, keySession,
+		encrypt(plainText, cipherText, plaintextE, ciphertextE, keySession,
 			ivSession, cipher, modeOfOp)
 	})
 	endecrypt_box.Add(btnEncrypt)
 
 	btnDecrypt := setup_btn("Decrypt")
 	btnDecrypt.Connect("clicked", func() {
-		newDecrypt(cipherText, plainText, plaintextE, ciphertextE, keySession,
+		decrypt(cipherText, plainText, plaintextE, ciphertextE, keySession,
 			cipher, modeOfOp)
 	})
 	endecrypt_box.Add(btnDecrypt)

@@ -197,14 +197,14 @@ func authEncryptTab() (*gtk.Box, error) {
 
 	btnEncrypt := setup_btn("Encrypt")
 	btnEncrypt.Connect("clicked", func() {
-		newEncrypt(plainText, cipherText, plainTextE, ciphertextE, keySession,
+		encrypt(plainText, cipherText, plainTextE, ciphertextE, keySession,
 			ivSession, cipher, modeOfOp)
 	})
 	endecrypt_box.Add(btnEncrypt)
 
 	btnDecrypt := setup_btn("Decrypt")
 	btnDecrypt.Connect("clicked", func() {
-		newDecrypt(cipherText, plainText, plainTextE, ciphertextE, keySession,
+		decrypt(cipherText, plainText, plainTextE, ciphertextE, keySession,
 			cipher, modeOfOp)
 	})
 	endecrypt_box.Add(btnDecrypt)
