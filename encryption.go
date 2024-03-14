@@ -1,16 +1,7 @@
 package main
 
-import (
-	"errors"
-	"fmt"
-
-	"github.com/gotk3/gotk3/gtk"
-
-	JMT "github.com/mawir157/jmtcrypto"
-)
-
 // import JMTR "github.com/mawir157/jmtcrypto/rand"
-
+/*
 func onEncrypt(inBow, outBox *gtk.TextView, s *Config) {
 	text := get_text_from_tview(inBow)
 
@@ -190,3 +181,4 @@ func doDecryption(msg []byte, state *Config) ([]byte, error) {
 	}
 	return out, err
 }
+*/

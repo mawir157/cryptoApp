@@ -19,7 +19,6 @@
 package main
 
 import (
-	"fmt"
 	// "strconv"
 	// "github.com/gotk3/gotk3/gdk"
 	// "github.com/gotk3/gotk3/glib"
@@ -40,24 +39,6 @@ func PrintEncoding(i Encoding) string {
 	}
 }
 
-// func SetActive(s *Config) {
-//	 // set everything to false
-//	 for k, _ := range s.widgets {
-//		 s.widgets[k].SetSensitive(false)
-//	 }
-//	 // put modeCombo back on
-//	 s.widgets["modeCombo"].SetSensitive(false)
-
-//	 // step 1 grab the
-//	 mode := s.widgets["modeCombo"].GetActiveText()
-// }
-
-func (s *Config) PrintState() {
-	fmt.Printf("PlainText Encryption mode: %s\n", PrintEncoding(s.plaintextE))
-	fmt.Printf("PlainText Decryption mode: %s\n", PrintEncoding(s.ciphertextE))
-	fmt.Printf("\n")
-}
-
 func main() {
 	gtk.Init(nil)
 
@@ -67,8 +48,7 @@ func main() {
 	winBox := setup_box(gtk.ORIENTATION_VERTICAL)
 	nb, _ := gtk.NotebookNew()
 
-	nbBlockCipher, state, _ := blockCipherTab()
-	state.PrintState()
+	nbBlockCipher, _ := blockCipherTab()
 	nbBlockCipherTabLabel, _ := gtk.LabelNew("Block Cipher")
 	nb.AppendPage(nbBlockCipher, nbBlockCipherTabLabel)
 
