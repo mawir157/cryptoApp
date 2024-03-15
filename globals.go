@@ -9,6 +9,7 @@ import (
 // wtf I am doing!
 
 type Encoding int
+
 const (
 	Ascii Encoding = iota
 	Base64
@@ -16,15 +17,17 @@ const (
 )
 
 type BCipher int
+
 const (
-	AES    BCipher = iota
+	AES BCipher = iota
 	Camellia
 	NULL
 )
 
 type CipherMode int
+
 const (
-	ECB    CipherMode = iota
+	ECB CipherMode = iota
 	CBC
 	PCB
 	OFB
@@ -34,14 +37,16 @@ const (
 )
 
 type PRNGType int
+
 const (
-	Mersenne   PRNGType = iota
+	Mersenne PRNGType = iota
 	PCG
 )
 
 type HashMode int
+
 const (
-	SHA256	HashMode = iota
+	SHA256 HashMode = iota
 	SHA512
 )
 
@@ -49,8 +54,7 @@ type HackWidget interface {
 	SetSensitive(bool)
 }
 
-var	TextMessage =
-`It was the best of times, it was the worst of times, it was the age of wisdom,
+var TextMessage = `It was the best of times, it was the worst of times, it was the age of wisdom,
 it was the age of foolishness, it was the epoch of belief, it was the epoch of
 incredulity, it was the season of Light, it was the season of Darkness, it was
 the spring of hope, it was the winter of despair, we had everything before us,
