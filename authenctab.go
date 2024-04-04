@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 
 	"math/rand"
@@ -68,7 +67,7 @@ func aeKeyChanged(entry *gtk.Entry, s *string) {
 	*s, _ = entry.GetText()
 }
 
-func aeKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *bool) {
+func aeKeyLoseFocus(entry *gtk.Entry, s *bool) {
 	name := "Key"
 	required := 16
 
@@ -160,7 +159,7 @@ func authEncryptTab() (*gtk.Box, error) {
 	})
 
 	keyBox.Connect("focus_out_event", func() {
-		aeKeyLoseFocus(keyBox, nil, &valid)
+		aeKeyLoseFocus(keyBox, &valid)
 	})
 
 	ivBox, _ := add_entry_box(mode_box_rhs, "IV", ivSession, 16)
@@ -170,7 +169,7 @@ func authEncryptTab() (*gtk.Box, error) {
 	})
 
 	ivBox.Connect("focus_out_event", func() {
-		aeKeyLoseFocus(ivBox, nil, &valid)
+		aeKeyLoseFocus(ivBox, &valid)
 	})
 
 	mode_box.PackStart(mode_box_rhs, true, true, 0)

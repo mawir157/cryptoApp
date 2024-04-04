@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 
 	"fmt"
@@ -27,7 +26,7 @@ func onHMACKeyChanged(entry *gtk.Entry, s *HMACTabConfig) {
 	s.key, _ = entry.GetText()
 }
 
-func onHMACKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, s *HMACTabConfig) {
+func onHMACKeyLoseFocus(entry *gtk.Entry, s *HMACTabConfig) {
 	s.key, _ = entry.GetText()
 }
 
@@ -145,7 +144,7 @@ func hmacTab() (*gtk.Box, *HMACTabConfig, error) {
 		onHMACKeyChanged(hmacKeyBox, &state)
 	})
 	hmacKeyBox.Connect("focus_out_event", func() {
-		onHMACKeyLoseFocus(hmacKeyBox, nil, &state)
+		onHMACKeyLoseFocus(hmacKeyBox, &state)
 	})
 
 	addHLine(IOBox, 10)
