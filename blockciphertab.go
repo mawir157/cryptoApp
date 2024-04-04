@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 
-	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 
 	"fmt"
@@ -16,7 +15,7 @@ func onKeyChanged(entry *gtk.Entry, key *string) {
 	*key, _ = entry.GetText()
 }
 
-func onKeyLoseFocus(entry *gtk.Entry, event *gdk.Event, valid *bool) {
+func onKeyLoseFocus(entry *gtk.Entry, valid *bool) {
 	name := "Key"
 	required := 16
 
@@ -39,7 +38,7 @@ func onIvChanged(entry *gtk.Entry, iv *string) {
 	*iv, _ = entry.GetText()
 }
 
-func onIVLoseFocus(entry *gtk.Entry, event *gdk.Event, valid *bool) {
+func onIVLoseFocus(entry *gtk.Entry, valid *bool) {
 	name := "IV"
 	required := 16
 	v, _ := entry.GetText()
@@ -120,32 +119,58 @@ func isValidText(s string, enc Encoding) bool {
 
 // TODO Sort out activating fields
 func onModeChanged(cb *gtk.ComboBoxText, modeOfOp *CipherMode, btns map[string]HackWidget) {
+	// seed, key, iv, nonce, prim, rng
 	switch enc := cb.GetActiveText(); enc {
 	case "ECB":
 		*modeOfOp = ECB
+		btns["key"].SetSensitive(true)
+		btns["iv"].SetSensitive(false)
+		btns["prim"].SetSensitive(true)
 		// updateCipherMode(false, true, false, false, true, false, s)
 	case "CBC":
 		*modeOfOp = CBC
+		btns["key"].SetSensitive(true)
+		btns["iv"].SetSensitive(true)
+		btns["prim"].SetSensitive(true)
 		// updateCipherMode(false, true, true, false, true, false, s)
 	case "PCB":
 		*modeOfOp = PCB
+		btns["key"].SetSensitive(true)
+		btns["iv"].SetSensitive(true)
+		btns["prim"].SetSensitive(true)
 		// updateCipherMode(false, true, true, false, true, false, s)
 	case "OFB":
 		*modeOfOp = OFB
+		btns["key"].SetSensitive(true)
+		btns["iv"].SetSensitive(true)
+		btns["prim"].SetSensitive(true)
 		// updateCipherMode(false, true, true, false, true, false, s)
 	case "CTR":
 		*modeOfOp = CTR
+		btns["key"].SetSensitive(true)
+		btns["iv"].SetSensitive(false)
+		btns["prim"].SetSensitive(true)
 		// updateCipherMode(false, true, false, true, true, false, s)
 	case "CFB":
 		*modeOfOp = CFB
+		btns["key"].SetSensitive(true)
+		btns["iv"].SetSensitive(true)
+		btns["prim"].SetSensitive(true)
 		// updateCipherMode(false, true, true, false, true, false, s)
 	case "PRNG stream":
 		*modeOfOp = PRNG
+		btns["key"].SetSensitive(false)
+		btns["iv"].SetSensitive(false)
+		btns["prim"].SetSensitive(false)
 		// updateCipherMode(true, false, false, false, false, true, s)
 	default:
 		fmt.Printf("Unidentified Encoding%s.\n", enc)
 		*modeOfOp = ECB
 	}
+}
+
+func updateFields() {
+
 }
 
 func blockCipherTab() (*gtk.Box, error) {
@@ -158,6 +183,8 @@ func blockCipherTab() (*gtk.Box, error) {
 	cipher := AES
 	modeOfOp := ECB
 	valid := true
+
+	fields := make(map[string]HackWidget)
 
 	main_box := setup_box(gtk.ORIENTATION_VERTICAL)
 	////////////////////////////////////////////////////////////////////////////////
@@ -201,9 +228,7 @@ func blockCipherTab() (*gtk.Box, error) {
 	primCombo.Connect("changed", func() {
 		onPrimitiveChanged(primCombo, &cipher)
 	})
-	modeCombo.Connect("changed", func() {
-		onModeChanged(modeCombo, &modeOfOp, nil)
-	})
+	fields["prim"] = primCombo
 
 	mode_box.PackStart(mode_box_lhs, true, true, 0)
 	addVLine(mode_box, 10)
@@ -211,22 +236,28 @@ func blockCipherTab() (*gtk.Box, error) {
 	mode_box_rhs := setup_box(gtk.ORIENTATION_VERTICAL)
 
 	keyBox, _ := add_entry_box(mode_box_rhs, "Key", keySession, 16)
+	fields["key"] = keyBox
 	keyBox.Connect("changed", func() {
 		onKeyChanged(keyBox, &keySession)
 	})
 
 	keyBox.Connect("focus_out_event", func() {
-		onKeyLoseFocus(keyBox, nil, &valid)
+		onKeyLoseFocus(keyBox, &valid)
 	})
 
 	ivBox, _ := add_entry_box(mode_box_rhs, "IV", ivSession, 16)
+	fields["iv"] = ivBox
 
 	ivBox.Connect("changed", func() {
 		onIvChanged(ivBox, &ivSession)
 	})
 
 	ivBox.Connect("focus_out_event", func() {
-		onIVLoseFocus(ivBox, nil, &valid)
+		onIVLoseFocus(ivBox, &valid)
+	})
+
+	modeCombo.Connect("changed", func() {
+		onModeChanged(modeCombo, &modeOfOp, fields)
 	})
 
 	mode_box.PackStart(mode_box_rhs, true, true, 0)
