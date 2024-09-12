@@ -48,6 +48,10 @@ type HashMode int
 const (
 	SHA256 HashMode = iota
 	SHA512
+	SHA3_224
+	SHA3_256
+	SHA3_384
+	SHA3_512
 )
 
 type HackWidget interface {

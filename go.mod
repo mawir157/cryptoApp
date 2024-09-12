@@ -1,8 +1,8 @@
 module github.com/mawir157/cryptoApp
 
-go 1.21
+go 1.22
 
-toolchain go1.21.5
+toolchain go1.23.1
 
 require (
 	github.com/gotk3/gotk3 v0.6.2

@@ -38,6 +38,18 @@ func onHash(inBow, outBox *gtk.TextView, plaintextEnc Encoding,
 	case SHA512:
 		hs := JMT.MakeSHA512()
 		byteStream = hs.Hash(byteStream)
+	case SHA3_224:
+		hs := JMT.MakeSHA3_224()
+		byteStream = hs.Hash(byteStream)
+	case SHA3_256:
+		hs := JMT.MakeSHA3_256()
+		byteStream = hs.Hash(byteStream)
+	case SHA3_384:
+		hs := JMT.MakeSHA3_384()
+		byteStream = hs.Hash(byteStream)
+	case SHA3_512:
+		hs := JMT.MakeSHA3_512()
+		byteStream = hs.Hash(byteStream)
 	default:
 		fmt.Printf("Unidentified Hash function %d.\n", mode)
 		hs := JMT.MakeSHA256()
@@ -96,6 +108,14 @@ func onHashChanged(cb *gtk.ComboBoxText, mode *HashMode) {
 		*mode = SHA256
 	case "SHA512":
 		*mode = SHA512
+	case "SHA3-224":
+		*mode = SHA3_224
+	case "SHA3-256":
+		*mode = SHA3_256
+	case "SHA3-384":
+		*mode = SHA3_384
+	case "SHA3-512":
+		*mode = SHA3_512
 	default:
 		fmt.Printf("Unidentified Hash Function %s.\n", hash)
 		*mode = SHA256
@@ -113,7 +133,7 @@ func hashTab() (*gtk.Box, error) {
 	addHLine(main_box, 10)
 
 	IOBox := setup_box(gtk.ORIENTATION_HORIZONTAL)
-	hashes := []string{"SHA256", "SHA512"}
+	hashes := []string{"SHA256", "SHA512", "SHA3-224", "SHA3-256", "SHA3-384", "SHA3-512"}
 	hashCombo, _ := add_drop_down(IOBox, "Hash function: ", hashes, 0)
 
 	addHLine(IOBox, 10)
